@@ -1,5 +1,5 @@
-#ifndef SLICE_DECRYPTION_GENERIC
-#define SLICE_DECRYPTION_GENERIC 
+#ifndef SLICE_DECODING_GENERIC
+#define SLICE_DECODING_GENERIC 
 
 #include "slice_dec_asn.h"
 #include "slice_dec_fb.h"

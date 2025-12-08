@@ -21,8 +21,8 @@
 /*
  * Decoding interface for plain text encoding Information Elements in SM-KPM
  */
-#ifndef KPM_DECRYPTION_PLAIN_H
-#define KPM_DECRYPTION_PLAIN_H
+#ifndef KPM_DECODING_PLAIN_H
+#define KPM_DECODING_PLAIN_H
 
 #include <stddef.h>
 #include "../ie/kpm_data_ie.h"

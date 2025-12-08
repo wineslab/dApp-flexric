@@ -21,8 +21,8 @@
 
 
 
-#ifndef PDCP_ENCRYPTION_GENERIC
-#define PDCP_ENCRYPTION_GENERIC 
+#ifndef PDCP_ENCODING_GENERIC
+#define PDCP_ENCODING_GENERIC 
 
 #include "pdcp_enc_asn.h"
 #include "pdcp_enc_fb.h"

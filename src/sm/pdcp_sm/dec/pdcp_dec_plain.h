@@ -21,8 +21,8 @@
 
 
 
-#ifndef PDCP_DECRYPTION_PLAIN_H
-#define PDCP_DECRYPTION_PLAIN_H
+#ifndef PDCP_DECODING_PLAIN_H
+#define PDCP_DECODING_PLAIN_H
 
 #include <stddef.h>
 #include "../ie/pdcp_data_ie.h"

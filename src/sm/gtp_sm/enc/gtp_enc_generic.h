@@ -20,8 +20,8 @@
  */
 
 
-#ifndef GTP_ENCRYPTION_GENERIC
-#define GTP_ENCRYPTION_GENERIC 
+#ifndef GTP_ENCODING_GENERIC
+#define GTP_ENCODING_GENERIC 
 
 #include "gtp_enc_plain.h"
 

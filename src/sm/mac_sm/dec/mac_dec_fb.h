@@ -21,8 +21,8 @@
 
 
 
-#ifndef MAC_DECRYPTION_FLATBUFFERS_H
-#define MAC_DECRYPTION_FLATBUFFERS_H
+#ifndef MAC_DECODING_FLATBUFFERS_H
+#define MAC_DECODING_FLATBUFFERS_H
 
 #include <stddef.h>
 #include "../ie/mac_data_ie.h"

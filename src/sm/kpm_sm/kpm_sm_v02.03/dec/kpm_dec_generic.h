@@ -21,8 +21,8 @@
 
 
 
-#ifndef MAC_DECRYPTION_GENERIC
-#define MAC_DECRYPTION_GENERIC 
+#ifndef MAC_DECODING_GENERIC
+#define MAC_DECODING_GENERIC 
 
 #include "kpm_dec_asn.h"
 //#include "kpm_dec_fb.h"

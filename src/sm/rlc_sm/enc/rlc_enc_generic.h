@@ -20,8 +20,8 @@
  */
 
 
-#ifndef RLC_ENCRYPTION_GENERIC
-#define RLC_ENCRYPTION_GENERIC 
+#ifndef RLC_ENCODING_GENERIC
+#define RLC_ENCODING_GENERIC 
 
 #include "rlc_enc_asn.h"
 #include "rlc_enc_fb.h"

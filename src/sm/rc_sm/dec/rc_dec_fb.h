@@ -20,8 +20,8 @@
  */
 
 
-#ifndef RC_DECRYPTION_FLATBUFFERS_H
-#define RC_DECRYPTION_FLATBUFFERS_H
+#ifndef RC_DECODING_FLATBUFFERS_H
+#define RC_DECODING_FLATBUFFERS_H
 
 #include <stddef.h>
 #include "../ie/rc_data_ie.h"

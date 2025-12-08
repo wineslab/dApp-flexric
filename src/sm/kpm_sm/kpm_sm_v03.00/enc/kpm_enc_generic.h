@@ -22,8 +22,8 @@
 /*
  * implementation via 'static' (that is, decided at compile time) polymorphism of the encoding part
  */
-#ifndef KPM_ENCRYPTION_GENERIC
-#define KPM_ENCRYPTION_GENERIC 
+#ifndef KPM_ENCODING_GENERIC
+#define KPM_ENCODING_GENERIC 
 
 #include "kpm_enc_asn.h"
 // #include "kpm_enc_plain.h"

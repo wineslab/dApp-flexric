@@ -20,8 +20,8 @@
  */
 
 
-#ifndef GTP_DECRYPTION_PLAIN_H
-#define GTP_DECRYPTION_PLAIN_H
+#ifndef GTP_DECODING_PLAIN_H
+#define GTP_DECODING_PLAIN_H
 
 #include <stddef.h>
 #include "../ie/gtp_data_ie.h"

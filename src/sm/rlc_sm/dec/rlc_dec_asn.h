@@ -20,8 +20,8 @@
  */
 
 
-#ifndef RLC_DECRYPTION_ASN_H
-#define RLC_DECRYPTION_ASN_H
+#ifndef RLC_DECODING_ASN_H
+#define RLC_DECODING_ASN_H
 
 #include <stddef.h>
 #include "../ie/rlc_data_ie.h"

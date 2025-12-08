@@ -20,8 +20,8 @@
  */
 
 
-#ifndef MAC_DECRYPTION_ASN_H
-#define MAC_DECRYPTION_ASN_H
+#ifndef MAC_DECODING_ASN_H
+#define MAC_DECODING_ASN_H
 
 #include <stddef.h>
 #include "../ie/mac_data_ie.h"
