@@ -1,0 +1,24 @@
+ASN DEFINITIONS AUTOMATIC TAGS ::= BEGIN
+
+-- ============================================================================
+-- REPORT STRUCTURES
+-- ============================================================================
+
+-- Report payload for RAN function 1
+Spectrum-PRBBlacklistReport ::= SEQUENCE {
+    blacklistedPRBs         SEQUENCE (SIZE (0..maxPRBs)) OF PRB-Index
+}
+
+-- ============================================================================
+-- xAppControlAction STRUCTURES
+-- ============================================================================
+
+-- Control payload for RAN function 1
+Spectrum-PRBWhitelistControl ::= SEQUENCE {
+    whitelistedPRBs         SEQUENCE (SIZE (0..maxPRBs)) OF PRB-Index
+}
+
+maxPRBs                     INTEGER ::= 273  -- Maximum PRBs in 5G NR
+PRB-Index ::=               INTEGER (0..272)
+
+END

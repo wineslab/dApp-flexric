@@ -345,6 +345,8 @@ void notify_stdout_listener(sm_ag_if_rd_ind_t const* data)
 //    print_kpm_stats(&data->kpm_ind);
   } else if (data->type == RAN_CTRL_STATS_V1_03){
     // assert(0!=0 && "Not implemented");
+  } else if (data->type == DAPP_STATS_V0){
+    //assert(0!=0 && "Not implemented");
   } else {
     assert(0 != 0 && "Unknown data type");
   }

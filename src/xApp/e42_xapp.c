@@ -48,6 +48,7 @@
 #include "../sm/gtp_sm/gtp_sm_id.h"
 #include "../sm/kpm_sm/kpm_sm_id_wrapper.h"
 #include "../sm/rc_sm/rc_sm_id.h"
+#include "../sm/dapp_sm/dapp_sm_id.h"
 
 #include "../../test/rnd/fill_rnd_data_rc.h"
 #include "../../test/rnd/fill_rnd_data_kpm.h"
@@ -158,6 +159,16 @@ void read_rc_e2_setup_xapp(void* data)
 //  rc->ran_func_def = fill_rc_ran_func_def();
 }
 
+// Not needed when using E42
+static
+void read_dapp_e2_setup_xapp(void* data)
+{
+  assert(data != NULL);
+//  assert(data->type == DAPP_AGENT_IF_E2_SETUP_ANS_V0);
+//  dapp_e2_setup_t* dapp = (dapp_e2_setup_t*)data;
+//  dapp->ran_func_def = fill_dapp_ran_func_def();
+}
+
 static
 sm_io_ag_ran_t init_io_ag_ran(void)
 {
@@ -165,6 +176,7 @@ sm_io_ag_ran_t init_io_ag_ran(void)
 
   dst.read_setup_tbl[KPM_V3_0_AGENT_IF_E2_SETUP_ANS_V0] = read_kpm_e2setup_xapp;
   dst.read_setup_tbl[RAN_CTRL_V1_3_AGENT_IF_E2_SETUP_ANS_V0] = read_rc_e2_setup_xapp;
+  dst.read_setup_tbl[DAPP_AGENT_IF_E2_SETUP_ANS_V0] = read_dapp_e2_setup_xapp;
 
   return dst;
 }
@@ -404,6 +416,7 @@ bool valid_ran_func_id(uint16_t ran_func_id)\
       || ran_func_id == SM_GTP_ID
       || ran_func_id == SM_KPM_ID
       || ran_func_id == SM_RC_ID
+      || ran_func_id == SM_DAPP_ID
     )
     return true;
 

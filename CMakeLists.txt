@@ -247,6 +247,17 @@ endif()
 
 target_compile_options(e2ap_ran_func_obj PRIVATE -fPIC -fvisibility=hidden)
 
+#########################
+##### E3 AGENT
+#########################
+set(E3_AGENT "OFF" CACHE STRING "Enable E3 Agent support")
+set_property(CACHE E3_AGENT PROPERTY STRINGS "ON" "OFF")
+message(STATUS "Selected E3_AGENT: ${E3_AGENT}")
+
+if(E3_AGENT)
+  add_compile_definitions(E3_AGENT)
+endif()
+
 
 #######
 ## Service Models
@@ -293,6 +304,12 @@ set(SM_ENCODING_GTP "PLAIN" CACHE STRING "The GTP SM encoding to use")
 set_property(CACHE SM_ENCODING_GTP PROPERTY STRINGS "PLAIN")
 message(STATUS "Selected GTP SM_ENCODING: ${SM_ENCODING_GTP}")
 
+# E2SM-DAPP Service Model
+if(E3_AGENT)
+set(SM_ENCODING_DAPP "ASN" CACHE STRING "The DAPP SM encoding to use")
+set_property(CACHE SM_ENCODING_DAPP PROPERTY STRINGS "ASN")
+message(STATUS "Selected DAPP SM_ENCODING: ${SM_ENCODING_DAPP}")
+endif()
 ########
 ### Flatbuffer
 ########
@@ -341,7 +358,9 @@ install(TARGETS tc_sm DESTINATION ${CMAKE_INSTALL_LIBDIR}/flexric)
 install(TARGETS gtp_sm DESTINATION ${CMAKE_INSTALL_LIBDIR}/flexric)
 install(TARGETS kpm_sm DESTINATION ${CMAKE_INSTALL_LIBDIR}/flexric)
 install(TARGETS rc_sm DESTINATION ${CMAKE_INSTALL_LIBDIR}/flexric)
-
+if(E3_AGENT)
+install(TARGETS dapp_sm DESTINATION ${CMAKE_INSTALL_LIBDIR}/flexric)
+endif()
 ###
 # Install the configuration file
 ###

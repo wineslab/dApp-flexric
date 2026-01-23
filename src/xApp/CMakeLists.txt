@@ -83,6 +83,12 @@ set(XAPP_SRC
 
   )
 
+if(E3_AGENT)
+  list(APPEND XAPP_SRC $<TARGET_OBJECTS:e3sm_obj>)
+  list(APPEND XAPP_SRC ../sm/dapp_sm/ie/dapp_data_ie.c)
+  list(APPEND XAPP_SRC $<TARGET_OBJECTS:e2sm_dapp_ir_obj>)
+endif()
+
 if(E2AP_ENCODING STREQUAL "ASN")
   add_library(e42_xapp 
             ${XAPP_BLD_LIB} # STATIC or SHARED

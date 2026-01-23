@@ -32,6 +32,7 @@
 #include "../sm/gtp_sm/ie/gtp_data_ie.h"
 #include "../sm/slice_sm/ie/slice_data_ie.h"
 #include "../sm/tc_sm/ie/tc_data_ie.h"
+#include "../sm/dapp_sm/ie/dapp_data_ie.h"
 
 typedef enum {
   KPM_RAN_FUNC_DEF_E,
@@ -42,6 +43,7 @@ typedef enum {
   GTP_RAN_FUNC_DEF_E,
   SLICE_RAN_FUNC_DEF_E,
   TC_RAN_FUNC_DEF_E,
+  DAPP_RAN_FUNC_DEF_E,
 } ran_func_def_e;
 
 typedef struct{ 
@@ -55,6 +57,7 @@ typedef struct{
    gtp_func_def_t gtp;
    slice_func_def_t slice;
    tc_func_def_t tc;
+   e2sm_dapp_func_def_t dapp;
  };
 } sm_ran_function_def_t;
 
