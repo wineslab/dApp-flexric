@@ -6,3 +6,8 @@ build/
 tags
 archives/
 test_results*.html
+src/sm/dapp_sm/ie/asn/*.c
+src/sm/dapp_sm/ie/asn/*.h
+src/sm/dapp_sm/ie/asn/Makefile.am.libasncodec
+examples/xApp/c/dapp/helpers/asn/defs/compiled_output/
+src/sm/dapp_sm/e3/service_models/*/asn/defs/compiled_output/

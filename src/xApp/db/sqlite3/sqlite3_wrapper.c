@@ -1573,7 +1573,7 @@ void write_db_sqlite3(sqlite3* db, global_e2_node_id_t const* id, sm_ag_if_rd_t 
   assert(rd->type == MAC_STATS_V0   || rd->type == RLC_STATS_V0 
       || rd->type == PDCP_STATS_V0  || rd->type == SLICE_STATS_V0 
       || rd->type == KPM_STATS_V3_0 || rd->type == GTP_STATS_V0
-      || rd->type == RAN_CTRL_STATS_V1_03);
+      || rd->type == RAN_CTRL_STATS_V1_03 || rd->type == DAPP_STATS_V0);
 
   if(rd->type == MAC_STATS_V0){
     write_mac_stats(db, id, &rd->mac);
@@ -1589,6 +1589,8 @@ void write_db_sqlite3(sqlite3* db, global_e2_node_id_t const* id, sm_ag_if_rd_t 
     write_kpm_stats(db, id, &ag_rd->ind.kpm.ind);
   } else if(rd->type ==  RAN_CTRL_STATS_V1_03){
     write_rc_stats(db, id, &rd->rc.ind);
+  } else if(rd->type == DAPP_STATS_V0){
+    printf("E2SM-DAPP sqlite not implemented\n");
   } else {
     assert(0!=0 && "Unknown statistics type received ");
   }
