@@ -1,5 +1,5 @@
-#ifndef ENCRYPTION_UE_ID_H
-#define ENCRYPTION_UE_ID_H
+#ifndef ENCODING_UE_ID_H
+#define ENCODING_UE_ID_H
 
 
 #ifdef __cplusplus

@@ -1,5 +1,5 @@
-#ifndef ENCRYPTION_GLOBAL_NG_RAN_H
-#define ENCRYPTION_GLOBAL_NG_RAN_H
+#ifndef ENCODING_GLOBAL_NG_RAN_H
+#define ENCODING_GLOBAL_NG_RAN_H
 
 
 #ifdef __cplusplus

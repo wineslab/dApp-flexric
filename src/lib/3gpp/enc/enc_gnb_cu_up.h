@@ -1,5 +1,5 @@
-#ifndef ENCRYPTION_GNB_CU_UP_H
-#define ENCRYPTION_GNB_CU_UP_H
+#ifndef ENCODING_GNB_CU_UP_H
+#define ENCODING_GNB_CU_UP_H
 
 
 #ifdef __cplusplus

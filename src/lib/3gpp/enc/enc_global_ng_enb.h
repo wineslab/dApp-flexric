@@ -1,5 +1,5 @@
-#ifndef ENCRYPTION_GLOBAL_NG_ENB_H
-#define ENCRYPTION_GLOBAL_NG_ENB_H
+#ifndef ENCODING_GLOBAL_NG_ENB_H
+#define ENCODING_GLOBAL_NG_ENB_H
 
 #ifdef __cplusplus
 extern "C" {

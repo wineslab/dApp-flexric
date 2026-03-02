@@ -1,5 +1,5 @@
-#ifndef DECRYPTION_EN_GNB_H
-#define DECRYPTION_EN_GNB_H
+#ifndef DECODING_EN_GNB_H
+#define DECODING_EN_GNB_H
 
 #ifdef __cplusplus
 extern "C" {

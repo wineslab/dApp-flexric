@@ -1,5 +1,5 @@
-#ifndef ENCRYPTION_GLOBAL_ENB_ID_H
-#define ENCRYPTION_GLOBAL_ENB_ID_H
+#ifndef ENCODING_GLOBAL_ENB_ID_H
+#define ENCODING_GLOBAL_ENB_ID_H
 
 
 #ifdef __cplusplus

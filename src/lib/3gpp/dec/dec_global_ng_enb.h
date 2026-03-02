@@ -1,5 +1,5 @@
-#ifndef DECRYPTION_GLOBAL_NG_ENB_H
-#define DECRYPTION_GLOBAL_NG_ENB_H
+#ifndef DECODING_GLOBAL_NG_ENB_H
+#define DECODING_GLOBAL_NG_ENB_H
 
 
 #ifdef __cplusplus
