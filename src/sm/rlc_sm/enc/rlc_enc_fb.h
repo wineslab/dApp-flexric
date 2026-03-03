@@ -21,8 +21,8 @@
 
 
 
-#ifndef RLC_ENCRYPTION_FLATBUFFERS_H
-#define RLC_ENCRYPTION_FLATBUFFERS_H
+#ifndef RLC_ENCODING_FLATBUFFERS_H
+#define RLC_ENCODING_FLATBUFFERS_H
 
 #include "../../../util/byte_array.h"
 #include "../ie/rlc_data_ie.h"

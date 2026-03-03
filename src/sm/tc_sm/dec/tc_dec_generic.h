@@ -1,5 +1,5 @@
-#ifndef TC_DECRYPTION_GENERIC
-#define TC_DECRYPTION_GENERIC 
+#ifndef TC_DECODING_GENERIC
+#define TC_DECODING_GENERIC 
 
 #include "tc_dec_asn.h"
 #include "tc_dec_fb.h"

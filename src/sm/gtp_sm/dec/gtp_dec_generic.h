@@ -20,8 +20,8 @@
  */
 
 
-#ifndef GTP_DECRYPTION_GENERIC
-#define GTP_DECRYPTION_GENERIC 
+#ifndef GTP_DECODING_GENERIC
+#define GTP_DECODING_GENERIC 
 
 #include "gtp_dec_plain.h"
 

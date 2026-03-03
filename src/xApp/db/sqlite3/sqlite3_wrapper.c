@@ -21,6 +21,7 @@
 
 #include "sqlite3_wrapper.h"
 #include "../../../util/time_now_us.h"
+#include "../../../util/e.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -1295,7 +1296,7 @@ char *get_meas_name(meas_type_t meas_type)
   if (meas_type.type == NAME_MEAS_TYPE) {
     value = cp_ba_to_str(meas_type.name);
   } else if (meas_type.type == ID_MEAS_TYPE) {
-    value = malloc(sizeof(meas_type.id));
+    value = ecalloc(8, sizeof(char));
     sprintf(value, "%u", meas_type.id);
   }
 

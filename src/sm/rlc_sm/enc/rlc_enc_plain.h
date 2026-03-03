@@ -21,8 +21,8 @@
 
 
 
-#ifndef RLC_ENCRYPTION_PLAIN_H
-#define RLC_ENCRYPTION_PLAIN_H 
+#ifndef RLC_ENCODING_PLAIN_H
+#define RLC_ENCODING_PLAIN_H 
 
 #include "../../../util/byte_array.h"
 #include "../ie/rlc_data_ie.h"

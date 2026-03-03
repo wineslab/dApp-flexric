@@ -21,8 +21,8 @@
 
 
 
-#ifndef MAC_ENCRYPTION_GENERIC
-#define MAC_ENCRYPTION_GENERIC 
+#ifndef MAC_ENCODING_GENERIC
+#define MAC_ENCODING_GENERIC 
 
 #include "mac_enc_asn.h"
 #include "mac_enc_fb.h"

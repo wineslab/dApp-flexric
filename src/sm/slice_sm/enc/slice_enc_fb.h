@@ -1,5 +1,5 @@
-#ifndef SLICE_ENCRYPTION_FLATBUFFERS_H
-#define SLICE_ENCRYPTION_FLATBUFFERS_H
+#ifndef SLICE_ENCODING_FLATBUFFERS_H
+#define SLICE_ENCODING_FLATBUFFERS_H
 
 #include "../../../util/byte_array.h"
 #include "../ie/slice_data_ie.h"

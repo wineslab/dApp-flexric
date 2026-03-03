@@ -21,8 +21,8 @@
 
 
 
-#ifndef PDCP_ENCRYPTION_PLAIN_H
-#define PDCP_ENCRYPTION_PLAIN_H 
+#ifndef PDCP_ENCODING_PLAIN_H
+#define PDCP_ENCODING_PLAIN_H 
 
 #include "../../../util/byte_array.h"
 #include "../ie/pdcp_data_ie.h"

@@ -20,8 +20,8 @@
  */
 
 
-#ifndef PDCP_DECRYPTION_ASN_H
-#define PDCP_DECRYPTION_ASN_H
+#ifndef PDCP_DECODING_ASN_H
+#define PDCP_DECODING_ASN_H
 
 #include <stddef.h>
 #include "../ie/pdcp_data_ie.h"

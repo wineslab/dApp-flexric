@@ -1,5 +1,5 @@
-#ifndef TC_DECRYPTION_ASN_H
-#define TC_DECRYPTION_ASN_H
+#ifndef TC_DECODING_ASN_H
+#define TC_DECODING_ASN_H
 
 #include <stddef.h>
 #include "../ie/tc_data_ie.h"

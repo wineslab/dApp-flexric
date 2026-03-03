@@ -21,8 +21,8 @@
 
 
 
-#ifndef GTP_ENCRYPTION_PLAIN_H
-#define GTP_ENCRYPTION_PLAIN_H 
+#ifndef GTP_ENCODING_PLAIN_H
+#define GTP_ENCODING_PLAIN_H 
 
 #include "../../../util/byte_array.h"
 #include "../ie/gtp_data_ie.h"

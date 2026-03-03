@@ -21,8 +21,8 @@
 
 
 
-#ifndef PDCP_DECRYPTION_FLATBUFFERS_H
-#define PDCP_DECRYPTION_FLATBUFFERS_H
+#ifndef PDCP_DECODING_FLATBUFFERS_H
+#define PDCP_DECODING_FLATBUFFERS_H
 
 #include <stddef.h>
 #include "../ie/pdcp_data_ie.h"

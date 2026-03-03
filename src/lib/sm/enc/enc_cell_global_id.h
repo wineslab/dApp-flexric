@@ -1,5 +1,5 @@
-#ifndef ENCRYPTION_CELL_GLOBAL_ID_H
-#define ENCRYPTION_CELL_GLOBAL_ID_H
+#ifndef ENCODING_CELL_GLOBAL_ID_H
+#define ENCODING_CELL_GLOBAL_ID_H
 
 
 #ifdef __cplusplus

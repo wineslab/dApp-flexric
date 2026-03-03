@@ -1,5 +1,5 @@
-#ifndef SLICE_ENCRYPTION_GENERIC
-#define SLICE_ENCRYPTION_GENERIC 
+#ifndef SLICE_ENCODING_GENERIC
+#define SLICE_ENCODING_GENERIC 
 
 #include "slice_enc_asn.h"
 #include "slice_enc_fb.h"

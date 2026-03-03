@@ -20,8 +20,8 @@
  */
 
 
-#ifndef RLC_DECRYPTION_FLATBUFFERS_H
-#define RLC_DECRYPTION_FLATBUFFERS_H
+#ifndef RLC_DECODING_FLATBUFFERS_H
+#define RLC_DECODING_FLATBUFFERS_H
 
 #include <stddef.h>
 #include "../ie/rlc_data_ie.h"

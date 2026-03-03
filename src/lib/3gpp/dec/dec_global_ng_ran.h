@@ -1,5 +1,5 @@
-#ifndef DECRYPTION_GLOBAL_NG_RAN_H
-#define DECRYPTION_GLOBAL_NG_RAN_H
+#ifndef DECODING_GLOBAL_NG_RAN_H
+#define DECODING_GLOBAL_NG_RAN_H
 
 #ifdef __cplusplus
 extern "C" {

@@ -21,8 +21,8 @@
 
 
 
-#ifndef PDCP_DECRYPTION_GENERIC
-#define PDCP_DECRYPTION_GENERIC 
+#ifndef PDCP_DECODING_GENERIC
+#define PDCP_DECODING_GENERIC 
 
 #include "pdcp_dec_asn.h"
 #include "pdcp_dec_fb.h"

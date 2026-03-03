@@ -1,5 +1,5 @@
-#ifndef TC_DECRYPTION_PLAIN_H
-#define TC_DECRYPTION_PLAIN_H
+#ifndef TC_DECODING_PLAIN_H
+#define TC_DECODING_PLAIN_H
 
 #include <stddef.h>
 #include "../ie/tc_data_ie.h"

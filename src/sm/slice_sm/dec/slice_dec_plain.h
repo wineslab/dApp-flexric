@@ -1,5 +1,5 @@
-#ifndef SLICE_DECRYPTION_PLAIN_H
-#define SLICE_DECRYPTION_PLAIN_H
+#ifndef SLICE_DECODING_PLAIN_H
+#define SLICE_DECODING_PLAIN_H
 
 #include <stddef.h>
 #include "../ie/slice_data_ie.h"

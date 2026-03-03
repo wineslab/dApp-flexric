@@ -1,5 +1,5 @@
-#ifndef KPM_ENCRYPTION_ASN_H
-#define KPM_ENCRYPTION_ASN_H
+#ifndef KPM_ENCODING_ASN_H
+#define KPM_ENCODING_ASN_H
 
 #ifdef __cplusplus
 extern "C" {

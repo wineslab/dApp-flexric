@@ -1,5 +1,5 @@
-#ifndef TC_ENCRYPTION_GENERIC
-#define TC_ENCRYPTION_GENERIC 
+#ifndef TC_ENCODING_GENERIC
+#define TC_ENCODING_GENERIC 
 
 #include "tc_enc_asn.h"
 #include "tc_enc_fb.h"

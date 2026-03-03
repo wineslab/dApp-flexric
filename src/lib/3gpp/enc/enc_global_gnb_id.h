@@ -1,5 +1,5 @@
-#ifndef ENCRYPTION_GLOBAL_GNB_ID_H
-#define ENCRYPTION_GLOBAL_GNB_ID_H
+#ifndef ENCODING_GLOBAL_GNB_ID_H
+#define ENCODING_GLOBAL_GNB_ID_H
 
 #ifdef __cplusplus
 extern "C" {

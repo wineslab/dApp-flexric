@@ -1,5 +1,5 @@
-#ifndef SLICE_DECRYPTION_ASN_H
-#define SLICE_DECRYPTION_ASN_H
+#ifndef SLICE_DECODING_ASN_H
+#define SLICE_DECODING_ASN_H
 
 #include <stddef.h>
 #include "../ie/slice_data_ie.h"

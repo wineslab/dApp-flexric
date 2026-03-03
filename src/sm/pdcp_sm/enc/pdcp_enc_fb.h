@@ -20,8 +20,8 @@
  */
 
 
-#ifndef PDCP_ENCRYPTION_FLATBUFFERS_H
-#define PDCP_ENCRYPTION_FLATBUFFERS_H
+#ifndef PDCP_ENCODING_FLATBUFFERS_H
+#define PDCP_ENCODING_FLATBUFFERS_H
 
 #include "../../../util/byte_array.h"
 #include "../ie/pdcp_data_ie.h"

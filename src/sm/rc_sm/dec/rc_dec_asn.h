@@ -20,8 +20,8 @@
  */
 
 
-#ifndef RC_DECRYPTION_ASN_H
-#define RC_DECRYPTION_ASN_H
+#ifndef RC_DECODING_ASN_H
+#define RC_DECODING_ASN_H
 
 #include <stddef.h>
 #include "../ie/rc_data_ie.h"

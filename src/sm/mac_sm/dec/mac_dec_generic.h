@@ -21,8 +21,8 @@
 
 
 
-#ifndef MAC_DECRYPTION_GENERIC
-#define MAC_DECRYPTION_GENERIC 
+#ifndef MAC_DECODING_GENERIC
+#define MAC_DECODING_GENERIC 
 
 #include "mac_dec_asn.h"
 #include "mac_dec_fb.h"

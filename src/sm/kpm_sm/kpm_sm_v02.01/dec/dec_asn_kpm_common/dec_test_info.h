@@ -1,5 +1,5 @@
-#ifndef DECRYPTION_TEST_INFORMATION_H
-#define DECRYPTION_TEST_INFORMATION_H
+#ifndef DECODING_TEST_INFORMATION_H
+#define DECODING_TEST_INFORMATION_H
 
 #include "../../ie/asn/TestCondInfo.h"
 #include "../../ie/kpm_data_ie/data/test_info_lst.h"

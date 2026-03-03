@@ -1,5 +1,5 @@
-#ifndef SLICE_ENCRYPTION_PLAIN_H
-#define SLICE_ENCRYPTION_PLAIN_H 
+#ifndef SLICE_ENCODING_PLAIN_H
+#define SLICE_ENCODING_PLAIN_H 
 
 #include "../../../util/byte_array.h"
 #include "../ie/slice_data_ie.h"

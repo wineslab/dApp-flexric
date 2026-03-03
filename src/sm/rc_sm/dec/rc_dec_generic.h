@@ -20,8 +20,8 @@
  */
 
 
-#ifndef RC_DECRYPTION_GENERIC
-#define RC_DECRYPTION_GENERIC 
+#ifndef RC_DECODING_GENERIC
+#define RC_DECODING_GENERIC 
 
 #include "rc_dec_asn.h"
 #include "rc_dec_fb.h"

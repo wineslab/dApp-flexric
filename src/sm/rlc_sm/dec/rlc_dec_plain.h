@@ -20,8 +20,8 @@
  */
 
 
-#ifndef RLC_DECRYPTION_PLAIN_H
-#define RLC_DECRYPTION_PLAIN_H
+#ifndef RLC_DECODING_PLAIN_H
+#define RLC_DECODING_PLAIN_H
 
 #include <stddef.h>
 #include "../ie/rlc_data_ie.h"
