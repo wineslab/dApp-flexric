@@ -549,17 +549,8 @@ void free_dapp_ind_data(dapp_ind_data_t* ind)
 
   free_e2sm_dapp_ind_hdr(&ind->hdr);
   free_e2sm_dapp_ind_msg(&ind->msg);
+  free_dapp_e3_ind_payload(&ind->e3);
 
-  switch (ind->e3.type) {
-    case DAPP_E3_SM_SPECTRUM:
-      free_spectrum_sm_report(&ind->e3.u.spectrum);
-      break;
-    case DAPP_E3_SM_NONE:
-    default:
-      break;
-  }
-
-  ind->e3.type = DAPP_E3_SM_NONE;
 }
 
 bool eq_dapp_ind_data(dapp_ind_data_t const* m0, dapp_ind_data_t const* m1)
@@ -580,25 +571,10 @@ bool eq_dapp_ind_data(dapp_ind_data_t const* m0, dapp_ind_data_t const* m1)
     return false;
   }
 
-  if (m0->e3.type != m1->e3.type)
+  if (eq_dapp_e3_ind_payload(&m0->e3, &m1->e3) == false) {
+    assert(0 != 0 && "Debug msg");
     return false;
-
-  switch (m0->e3.type) {
-    case DAPP_E3_SM_NONE:
-      break;
-
-    case DAPP_E3_SM_SPECTRUM:
-      if (!eq_spectrum_sm_report(&m0->e3.u.spectrum, &m1->e3.u.spectrum)) {
-        assert(0 != 0 && "Debug spectrum payload");
-        return false;
-      }
-      break;
-
-    default:
-      assert(0 != 0 && "Unknown DAPP E3 SM type");
-      return false;
   }
-
 
   return true;
 }
@@ -610,17 +586,9 @@ dapp_ind_data_t cp_dapp_ind_data(dapp_ind_data_t const* src)
 
   dst.hdr = cp_e2sm_dapp_ind_hdr(&src->hdr);
   dst.msg = cp_e2sm_dapp_ind_msg(&src->msg);
+  dst.e3 =  cp_dapp_e3_ind_payload(&src->e3);
 
-  dst.e3.type = src->e3.type;
-  switch (src->e3.type) {
-    case DAPP_E3_SM_SPECTRUM:
-      dst.e3.u.spectrum = cp_spectrum_sm_report(&src->e3.u.spectrum);
-      break;
-
-    case DAPP_E3_SM_NONE:
-    default:
-      break;
-  }
+  assert(eq_dapp_ind_data(src, &dst) == true);
 
   return dst;
 }
@@ -635,18 +603,8 @@ void free_dapp_ctrl_req_data(dapp_ctrl_req_data_t* src)
 
   free_e2sm_dapp_ctrl_hdr(&src->hdr);
   free_e2sm_dapp_ctrl_msg(&src->msg);
+  free_dapp_e3_ctrl_payload(&src->e3);
 
-  switch (src->e3.type) {
-    case DAPP_E3_SM_SPECTRUM:
-      free_spectrum_sm_control(&src->e3.u.spectrum);
-      break;
-
-    case DAPP_E3_SM_NONE:
-    default:
-      break;
-  }
-
-  src->e3.type = DAPP_E3_SM_NONE;
 }
 
 bool eq_dapp_ctrl_req_data(dapp_ctrl_req_data_t const* m0, dapp_ctrl_req_data_t const* m1)
@@ -663,20 +621,10 @@ bool eq_dapp_ctrl_req_data(dapp_ctrl_req_data_t const* m0, dapp_ctrl_req_data_t 
   if (!eq_e2sm_dapp_ctrl_msg(&m0->msg, &m1->msg))
     return false;
 
-  if (m0->e3.type != m1->e3.type)
+  if (!eq_dapp_e3_ctrl_payload(&m0->e3, &m1->e3))
     return false;
 
-  switch (m0->e3.type) {
-    case DAPP_E3_SM_NONE:
-      return true;
-
-    case DAPP_E3_SM_SPECTRUM:
-      return eq_spectrum_sm_control(&m0->e3.u.spectrum, &m1->e3.u.spectrum);
-
-    default:
-      assert(0 != 0 && "Unknown DAPP E3 SM type");
-      return false;
-  }
+  return true;
 }
 
 dapp_ctrl_req_data_t cp_dapp_ctrl_req_data(dapp_ctrl_req_data_t const* src)
@@ -686,17 +634,7 @@ dapp_ctrl_req_data_t cp_dapp_ctrl_req_data(dapp_ctrl_req_data_t const* src)
 
   dst.hdr = cp_e2sm_dapp_ctrl_hdr(&src->hdr);
   dst.msg = cp_e2sm_dapp_ctrl_msg(&src->msg);
-
-  dst.e3.type = src->e3.type;
-  switch (src->e3.type) {
-    case DAPP_E3_SM_SPECTRUM:
-      dst.e3.u.spectrum = cp_spectrum_sm_control(&src->e3.u.spectrum);
-      break;
-
-    case DAPP_E3_SM_NONE:
-    default:
-      break;
-  }
+  dst.e3 = cp_dapp_e3_ctrl_payload(&src->e3);
 
   assert(eq_dapp_ctrl_req_data(src, &dst) == true);
   return dst;
@@ -719,6 +657,8 @@ void free_dapp_e3_ind_payload(dapp_e3_ind_payload_t* src)
     default:
       break;
   }
+
+  src->type = DAPP_E3_SM_NONE;
 }
 
 dapp_e3_ind_payload_t cp_dapp_e3_ind_payload(dapp_e3_ind_payload_t const* src)
@@ -786,6 +726,8 @@ void free_dapp_e3_ctrl_payload(dapp_e3_ctrl_payload_t* src)
     default:
       break;
   }
+
+  src->type = DAPP_E3_SM_NONE;
 }
 
 dapp_e3_ctrl_payload_t cp_dapp_e3_ctrl_payload(dapp_e3_ctrl_payload_t const* src)
