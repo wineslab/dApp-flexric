@@ -15,7 +15,7 @@
  */
 typedef struct {
   long prb_count;
-  uint16_t* whitelistedPRBs;
+  uint16_t* blockedPRBs;
 } spectrum_sm_control_t;
 
 /**

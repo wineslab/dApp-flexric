@@ -14,8 +14,8 @@ Spectrum-PRBBlacklistReport ::= SEQUENCE {
 -- ============================================================================
 
 -- Control payload for RAN function 1
-Spectrum-PRBWhitelistControl ::= SEQUENCE {
-    whitelistedPRBs         SEQUENCE (SIZE (0..maxPRBs)) OF PRB-Index
+Spectrum-PRBBlockedControl ::= SEQUENCE {
+    blockedPRBs         SEQUENCE (SIZE (0..maxPRBs)) OF PRB-Index
 }
 
 maxPRBs                     INTEGER ::= 273  -- Maximum PRBs in 5G NR

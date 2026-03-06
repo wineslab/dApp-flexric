@@ -3,9 +3,9 @@
 void free_spectrum_sm_control(spectrum_sm_control_t* src)
 {
   assert(src != NULL);
-  if (src->whitelistedPRBs) {
-    free(src->whitelistedPRBs);
-    src->whitelistedPRBs = NULL;
+  if (src->blockedPRBs) {
+    free(src->blockedPRBs);
+    src->blockedPRBs = NULL;
   }
   src->prb_count = 0;
 }
@@ -24,10 +24,10 @@ bool eq_spectrum_sm_control(spectrum_sm_control_t const* m0, spectrum_sm_control
   if (m0->prb_count == 0)
     return true;
 
-  if (!m0->whitelistedPRBs || !m1->whitelistedPRBs)
+  if (!m0->blockedPRBs || !m1->blockedPRBs)
     return false;
 
-  return memcmp(m0->whitelistedPRBs, m1->whitelistedPRBs, (size_t)m0->prb_count * sizeof(uint16_t)) == 0;
+  return memcmp(m0->blockedPRBs, m1->blockedPRBs, (size_t)m0->prb_count * sizeof(uint16_t)) == 0;
 }
 
 spectrum_sm_control_t cp_spectrum_sm_control(spectrum_sm_control_t const* src)
@@ -36,12 +36,12 @@ spectrum_sm_control_t cp_spectrum_sm_control(spectrum_sm_control_t const* src)
 
   spectrum_sm_control_t dst;
   dst.prb_count = src->prb_count;
-  dst.whitelistedPRBs = NULL;
+  dst.blockedPRBs = NULL;
 
-  if (src->prb_count > 0 && src->whitelistedPRBs != NULL) {
-    dst.whitelistedPRBs = (uint16_t*)malloc((size_t)src->prb_count * sizeof(uint16_t));
-    assert(dst.whitelistedPRBs != NULL && "Memory exhausted in cp_ran_function_1");
-    memcpy(dst.whitelistedPRBs, src->whitelistedPRBs, (size_t)src->prb_count * sizeof(uint16_t));
+  if (src->prb_count > 0 && src->blockedPRBs != NULL) {
+    dst.blockedPRBs = (uint16_t*)malloc((size_t)src->prb_count * sizeof(uint16_t));
+    assert(dst.blockedPRBs != NULL && "Memory exhausted in cp_ran_function_1");
+    memcpy(dst.blockedPRBs, src->blockedPRBs, (size_t)src->prb_count * sizeof(uint16_t));
   }
 
   return dst;

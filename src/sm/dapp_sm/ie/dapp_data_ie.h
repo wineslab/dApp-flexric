@@ -84,6 +84,12 @@ typedef struct {
   } u;
 } dapp_e3_ind_payload_t;
 
+__attribute__((visibility("default"))) void free_dapp_e3_ind_payload(dapp_e3_ind_payload_t* src);
+
+__attribute__((visibility("default"))) dapp_e3_ind_payload_t cp_dapp_e3_ind_payload(dapp_e3_ind_payload_t const* src);
+
+__attribute__((visibility("default"))) bool eq_dapp_e3_ind_payload(dapp_e3_ind_payload_t const* m0, dapp_e3_ind_payload_t const* m1);
+
 typedef struct {
   dapp_e3_sm_type_e type;
 
@@ -92,6 +98,12 @@ typedef struct {
   } u;
 
 } dapp_e3_ctrl_payload_t;
+
+__attribute__((visibility("default"))) void free_dapp_e3_ctrl_payload(dapp_e3_ctrl_payload_t* src);
+
+__attribute__((visibility("default"))) dapp_e3_ctrl_payload_t cp_dapp_e3_ctrl_payload(dapp_e3_ctrl_payload_t const* src);
+
+__attribute__((visibility("default"))) bool eq_dapp_e3_ctrl_payload(dapp_e3_ctrl_payload_t const* m0, dapp_e3_ctrl_payload_t const* m1);
 
 //////////////////////////////////////
 // RIC Event Trigger Definition

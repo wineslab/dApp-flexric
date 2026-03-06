@@ -18,7 +18,7 @@ endif()
 
 file(GLOB ASN_DAPP_XAPP_SRC
   ${ASN1C_OUTPUT_DIR}/Spectrum-PRBBlacklistReport.c
-  ${ASN1C_OUTPUT_DIR}/Spectrum-PRBWhitelistControl.c
+  ${ASN1C_OUTPUT_DIR}/Spectrum-PRBBlockedControl.c
   ${ASN1C_OUTPUT_DIR}/PRB-Index.c
 )
 
