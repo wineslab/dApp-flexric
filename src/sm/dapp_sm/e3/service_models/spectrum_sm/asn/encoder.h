@@ -10,7 +10,7 @@
  * @brief Encode a Spectrum SM control IR into ASN.1 PER.
  *
  * This function converts a high-level @ref spectrum_sm_control_t structure
- * into a wire-format ASN.1 PER-encoded Spectrum_PRBWhitelistControl message.
+ * into a wire-format ASN.1 PER-encoded Spectrum_PRBBlockedControl message.
  *
  * Behavior:
  *  - Validates @p out_buf and @p out_size, initializes them to NULL/0.

@@ -25,8 +25,8 @@ bool dapp_enc_e3_control(uint32_t ran_function_id, const dapp_e3_ctrl_payload_t*
 
       const spectrum_sm_control_t* ctrl = &payload->u.spectrum;
 
-      if (ctrl->prb_count > 0 && ctrl->whitelistedPRBs == NULL) {
-        fprintf(stderr, "[DAPP][E3][ENC] whitelistedPRBs == NULL but prb_count > 0\n");
+      if (ctrl->prb_count > 0 && ctrl->blockedPRBs == NULL) {
+        fprintf(stderr, "[DAPP][E3][ENC] blockedPRBs == NULL but prb_count > 0\n");
         return false;
       }
 

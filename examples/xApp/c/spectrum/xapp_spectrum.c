@@ -33,6 +33,30 @@ static void* signal_thread(void* arg)
   return NULL;
 }
 
+/* ------------------------------------------------------------------ */
+/* Predefined control message variants                                 */
+/* ------------------------------------------------------------------ */
+
+typedef struct {
+  size_t      count;
+  uint16_t    prbs[273];
+} prb_list_t;
+
+static const prb_list_t ctrl_variants[] = {
+  /* 0 – block edges */
+  { .count = 4, .prbs = { 0, 1, 271, 272 } },
+  /* 1 – block centre cluster */
+  { .count = 5, .prbs = { 130, 131, 132, 133, 134 } },
+  /* 2 – block even-numbered low PRBs */
+  { .count = 6, .prbs = { 0, 2, 4, 6, 8, 10 } },
+  /* 3 – block a few scattered PRBs */
+  { .count = 3, .prbs = { 50, 150, 250 } },
+  /* 4 – clear everything (empty blacklist) */
+  { .count = 0, .prbs = { 0 } },
+};
+
+#define NUM_VARIANTS (sizeof(ctrl_variants) / sizeof(ctrl_variants[0]))
+
 /**
  * @brief Indication callback for the DAPP service model.
  *
@@ -121,27 +145,34 @@ static void send_control_message(e2_node_arr_xapp_t nodes,
  *  - Sends the control to all E2 nodes using the generic send_control_message()
  *    helper with the Spectrum RAN function ID.
  */
-static void generate_control_message_spectrum(e2_node_arr_xapp_t nodes)
+static void generate_control_message_spectrum(e2_node_arr_xapp_t nodes,
+                                              unsigned variant_idx)
 {
+  const prb_list_t* v = &ctrl_variants[variant_idx % NUM_VARIANTS];
+
   spectrum_sm_control_t ctrl = (spectrum_sm_control_t){0};
-  ctrl.prb_count = 4;
-  ctrl.whitelistedPRBs = calloc(ctrl.prb_count, sizeof(uint16_t));
+  ctrl.prb_count = (long)v->count;
 
-  assert(ctrl.whitelistedPRBs != NULL && "Failed to allocate PRB list");
+  if (ctrl.prb_count > 0) {
+    ctrl.blockedPRBs = calloc(ctrl.prb_count, sizeof(uint16_t));
+    assert(ctrl.blockedPRBs != NULL && "Failed to allocate PRB list");
+    for (size_t i = 0; i < v->count; ++i)
+      ctrl.blockedPRBs[i] = v->prbs[i];
+  } else {
+    ctrl.blockedPRBs = NULL;
+  }
 
-  ctrl.whitelistedPRBs[0] = 1;
-  ctrl.whitelistedPRBs[1] = 3;
-  ctrl.whitelistedPRBs[2] = 6;
-  ctrl.whitelistedPRBs[3] = 9;
+  printf("[DAPP RC]: Sending control variant %u — %ld blocked PRBs:",
+         variant_idx % (unsigned)NUM_VARIANTS, ctrl.prb_count);
+  for (long i = 0; i < ctrl.prb_count; ++i)
+    printf(" %u", ctrl.blockedPRBs[i]);
+  printf("\n");
 
   dapp_e3_ctrl_payload_t payload = (dapp_e3_ctrl_payload_t){0};
   payload.type = DAPP_E3_SM_SPECTRUM;
   payload.u.spectrum = ctrl;
 
-  uint32_t ran_function_id = RAN_FUNC_ID_SPECTRUM; // Spectrum SM
-  uint32_t dapp_id = 1; // dApp id
-
-  send_control_message(nodes, DAPP_SM_ID, ran_function_id, dapp_id, &payload);
+  send_control_message(nodes, DAPP_SM_ID, RAN_FUNC_ID_SPECTRUM, /*dapp_id=*/1, &payload);
 }
 
 /**
@@ -346,8 +377,8 @@ static void delete_subscriptions(sm_ans_xapp_t* hndl, e2_node_arr_xapp_t nodes)
   for (int i = 0; i < nodes.len; ++i) {
     if (hndl[i].success == true) {
       rm_report_sm_xapp_api(hndl[i].u.handle);
-    }
   }
+}
 }
 
 /**
@@ -396,15 +427,21 @@ int main(int argc, char* argv[])
 
   subscribe_sm(nodes, hndl);
 
-  generate_control_message_spectrum(nodes);
-
-  /* Wait up to 600 seconds, or until CTRL+C / SIGTERM arrives */
+  /* ---- Periodic control loop: send a different variant every 5 s ---- */
+  const unsigned ctrl_period_sec = 5;
   const unsigned max_runtime_sec = 600;
   unsigned elapsed = 0;
+  unsigned variant = 0;
 
   while (!g_terminate && elapsed < max_runtime_sec) {
-    sleep(1);
-    ++elapsed;
+    generate_control_message_spectrum(nodes, variant);
+    variant++;
+
+    /* Sleep for ctrl_period_sec, but check g_terminate every second */
+    for (unsigned s = 0; s < ctrl_period_sec && !g_terminate; ++s) {
+      sleep(1);
+      ++elapsed;
+    }
   }
 
   if (g_terminate) {

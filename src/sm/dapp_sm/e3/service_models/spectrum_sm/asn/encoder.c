@@ -1,6 +1,6 @@
 #include "encoder.h"
 
-#include "defs/compiled_output/Spectrum-PRBWhitelistControl.h"
+#include "defs/compiled_output/Spectrum-PRBBlockedControl.h"
 
 #include <assert.h>
 #include <string.h>
@@ -23,14 +23,14 @@ bool spectrum_sm_enc_control(const spectrum_sm_control_t* ctrl, uint8_t** out_bu
   if (ctrl->prb_count < 0 || ctrl->prb_count > 273)
     return false;
 
-  Spectrum_PRBWhitelistControl_t asn;
+  Spectrum_PRBBlockedControl_t asn;
   memset(&asn, 0, sizeof(asn));
 
   for (long i = 0; i < ctrl->prb_count; ++i) {
-    const uint16_t v = ctrl->whitelistedPRBs[i];
+    const uint16_t v = ctrl->blockedPRBs[i];
 
     if (v > 272) {
-      ASN_STRUCT_RESET(asn_DEF_Spectrum_PRBWhitelistControl, &asn);
+      ASN_STRUCT_RESET(asn_DEF_Spectrum_PRBBlockedControl, &asn);
       return false;
     }
 
@@ -39,18 +39,18 @@ bool spectrum_sm_enc_control(const spectrum_sm_control_t* ctrl, uint8_t** out_bu
 
     *elem = (PRB_Index_t)v;
 
-    if (ASN_SEQUENCE_ADD(&asn.whitelistedPRBs.list, elem) != 0) {
+    if (ASN_SEQUENCE_ADD(&asn.blockedPRBs.list, elem) != 0) {
       free(elem);
-      ASN_STRUCT_RESET(asn_DEF_Spectrum_PRBWhitelistControl, &asn);
+      ASN_STRUCT_RESET(asn_DEF_Spectrum_PRBBlockedControl, &asn);
       return false;
     }
   }
 
   uint8_t tmp[2048];
-  asn_enc_rval_t er = aper_encode_to_buffer(&asn_DEF_Spectrum_PRBWhitelistControl, NULL, &asn, tmp, sizeof(tmp));
+  asn_enc_rval_t er = aper_encode_to_buffer(&asn_DEF_Spectrum_PRBBlockedControl, NULL, &asn, tmp, sizeof(tmp));
 
   if (er.encoded <= 0) {
-    ASN_STRUCT_RESET(asn_DEF_Spectrum_PRBWhitelistControl, &asn);
+    ASN_STRUCT_RESET(asn_DEF_Spectrum_PRBBlockedControl, &asn);
     return false;
   }
 
@@ -63,6 +63,6 @@ bool spectrum_sm_enc_control(const spectrum_sm_control_t* ctrl, uint8_t** out_bu
   *out_buf = out;
   *out_size = encoded_bytes;
 
-  ASN_STRUCT_RESET(asn_DEF_Spectrum_PRBWhitelistControl, &asn);
+  ASN_STRUCT_RESET(asn_DEF_Spectrum_PRBBlockedControl, &asn);
   return true;
 }
