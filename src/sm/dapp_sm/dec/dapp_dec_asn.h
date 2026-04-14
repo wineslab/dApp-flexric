@@ -6,7 +6,7 @@
 
 __attribute__((visibility("default"))) e2sm_dapp_event_trigger_t dapp_dec_event_trigger_asn(size_t len, uint8_t const ev_tr[len]);
 
-__attribute__((visibility("default"))) e2sm_dapp_action_def_t dapp_dec_action_def_asn(size_t len, uint8_t const action_def[len]);
+__attribute__((visibility("default"))) e2sm_dapp_action_def_t dapp_dec_action_def_asn(size_t len, uint8_t const buf[len]);
 
 __attribute__((visibility("default"))) e2sm_dapp_ind_hdr_t dapp_dec_ind_hdr_asn(size_t len, uint8_t const ind_hdr[len]);
 

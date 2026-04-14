@@ -12,25 +12,27 @@
 #include "../../../../util/byte_array.h"
 
 #include "../ie/asn/E2SM-DAPP-EventTrigger.h"
-#include "../ie/asn/E2SM-DAPP-EventTrigger-Format0.h"
+#include "../ie/asn/E2SM-DAPP-EventTrigger-Format1.h"
 
 #include "../ie/asn/E2SM-DAPP-ActionDefinition.h"
-#include "../ie/asn/E2SM-DAPP-ActionDefinition-Format0.h"
+#include "../ie/asn/E2SM-DAPP-ActionDefinition-Format1.h"
 
 #include "../ie/asn/E2SM-DAPP-IndicationHeader.h"
-#include "../ie/asn/E2SM-DAPP-IndicationHeader-Format0.h"
+#include "../ie/asn/E2SM-DAPP-IndicationHeader-Format1.h"
+#include "../ie/asn/E2SM-DAPP-IndicationHeader-Format2.h"
 
 #include "../ie/asn/E2SM-DAPP-IndicationMessage.h"
-#include "../ie/asn/E2SM-DAPP-IndicationMessage-Format0.h"
+#include "../ie/asn/E2SM-DAPP-IndicationMessage-Format1.h"
+#include "../ie/asn/E2SM-DAPP-IndicationMessage-Format2.h"
 
 #include "../ie/asn/E2SM-DAPP-ControlHeader.h"
-#include "../ie/asn/E2SM-DAPP-ControlHeader-Format0.h"
+#include "../ie/asn/E2SM-DAPP-ControlHeader-Format1.h"
 
 #include "../ie/asn/E2SM-DAPP-ControlMessage.h"
-#include "../ie/asn/E2SM-DAPP-ControlMessage-Format0.h"
+#include "../ie/asn/E2SM-DAPP-ControlMessage-Format1.h"
 
 #include "../ie/asn/E2SM-DAPP-ControlOutcome.h"
-#include "../ie/asn/E2SM-DAPP-ControlOutcome-Format0.h"
+#include "../ie/asn/E2SM-DAPP-ControlOutcome-Format1.h"
 
 #include "../ie/asn/E2SM-DAPP-RANFunctionDefinition.h"
 
@@ -42,6 +44,9 @@
 #include "../ie/asn/RANFunctionDefinition-Control.h"
 #include "../ie/asn/RANFunctionDefinition-Control-Item.h"
 
+#include "../ie/asn/DAppE3Subscription-Item.h"
+#include "../ie/asn/DAppE3Subscription-List.h"
+
 static inline OCTET_STRING_t copy_ba_to_ostring(byte_array_t ba)
 {
   OCTET_STRING_t os = {.size = ba.len};
@@ -50,11 +55,11 @@ static inline OCTET_STRING_t copy_ba_to_ostring(byte_array_t ba)
   return os;
 }
 
-static E2SM_DAPP_EventTrigger_Format0_t* cp_dapp_ev_trigger_format_0(e2sm_dapp_ev_trg_frmt_0_t const* src)
+static E2SM_DAPP_EventTrigger_Format1_t* cp_dapp_ev_trigger_format_1(e2sm_dapp_ev_trg_frmt_1_t const* src)
 {
   assert(src != NULL);
 
-  E2SM_DAPP_EventTrigger_Format0_t* dst = calloc(1, sizeof(E2SM_DAPP_EventTrigger_Format0_t));
+  E2SM_DAPP_EventTrigger_Format1_t* dst = calloc(1, sizeof(E2SM_DAPP_EventTrigger_Format1_t));
   assert(dst != NULL && "Memory exhausted");
 
   return dst;
@@ -67,9 +72,9 @@ byte_array_t dapp_enc_event_trigger_asn(e2sm_dapp_event_trigger_t const* src)
   E2SM_DAPP_EventTrigger_t dst = {0};
   defer({ ASN_STRUCT_RESET(asn_DEF_E2SM_DAPP_EventTrigger, &dst); });
 
-  if (src->format == FORMAT_0_E2SM_DAPP_EV_TRIGGER_FORMAT) {
-    dst.ric_eventTrigger_formats.present = E2SM_DAPP_EventTrigger__ric_eventTrigger_formats_PR_eventTrigger_Format0;
-    dst.ric_eventTrigger_formats.choice.eventTrigger_Format0 = cp_dapp_ev_trigger_format_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_EV_TRIGGER_FORMAT) {
+    dst.ric_eventTrigger_formats.present = E2SM_DAPP_EventTrigger__ric_eventTrigger_formats_PR_eventTrigger_Format1;
+    dst.ric_eventTrigger_formats.choice.eventTrigger_Format1 = cp_dapp_ev_trigger_format_1(&src->frmt_1);
   } else {
     assert(0 != 0 && "Unknown format");
   }
@@ -83,11 +88,13 @@ byte_array_t dapp_enc_event_trigger_asn(e2sm_dapp_event_trigger_t const* src)
   return ba;
 }
 
-static E2SM_DAPP_ActionDefinition_Format0_t* cp_act_def_frmt_0(e2sm_dapp_act_def_frmt_0_t const* src)
+static E2SM_DAPP_ActionDefinition_Format1_t* enc_action_def_frmt_1(e2sm_dapp_action_def_frmt_1_t const* src)
 {
   assert(src != NULL);
-  E2SM_DAPP_ActionDefinition_Format0_t* dst = calloc(1, sizeof(E2SM_DAPP_ActionDefinition_Format0_t));
-  assert(dst != NULL);
+
+  E2SM_DAPP_ActionDefinition_Format1_t* dst = calloc(1, sizeof(*dst));
+  assert(dst != NULL && "Memory exhausted");
+
   return dst;
 }
 
@@ -98,16 +105,16 @@ byte_array_t dapp_enc_action_def_asn(e2sm_dapp_action_def_t const* src)
   E2SM_DAPP_ActionDefinition_t dst = {0};
   defer({ ASN_STRUCT_RESET(asn_DEF_E2SM_DAPP_ActionDefinition, &dst); });
 
-  dst.ric_Style_Type = src->ric_style_type;
+  dst.ric_Style_Type = (long)src->ric_style_type;
 
-  if (src->format == FORMAT_0_E2SM_DAPP_ACT_DEF) {
-    dst.ric_actionDefinition_formats.present = E2SM_DAPP_ActionDefinition__ric_actionDefinition_formats_PR_actionDefinition_Format0;
-    dst.ric_actionDefinition_formats.choice.actionDefinition_Format0 = cp_act_def_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_ACTION_DEF) {
+    dst.actionDefinition_formats.present = E2SM_DAPP_ActionDefinition__actionDefinition_formats_PR_actionDefinition_Format1;
+    dst.actionDefinition_formats.choice.actionDefinition_Format1 = enc_action_def_frmt_1(&src->frmt_1);
   } else {
-    assert(0 != 0 && "not implemented");
+    assert(0 != 0 && "Unknown action definition format");
   }
 
-  byte_array_t ba = {.buf = malloc(512 * 1024), .len = 512 * 1024};
+  byte_array_t ba = {.buf = malloc(1024), .len = 1024};
   const enum asn_transfer_syntax syntax = ATS_ALIGNED_BASIC_PER;
   asn_enc_rval_t er = asn_encode_to_buffer(NULL, syntax, &asn_DEF_E2SM_DAPP_ActionDefinition, &dst, ba.buf, ba.len);
   assert(er.encoded > -1 && (size_t)er.encoded <= ba.len);
@@ -116,15 +123,49 @@ byte_array_t dapp_enc_action_def_asn(e2sm_dapp_action_def_t const* src)
   return ba;
 }
 
-static E2SM_DAPP_IndicationHeader_Format0_t* cp_ind_hdr_frmt_0(e2sm_dapp_ind_hdr_frmt_0_t const* src)
+static E2SM_DAPP_IndicationHeader_Format2_t* cp_ind_hdr_frmt_2(e2sm_dapp_ind_hdr_frmt_2_t const* src)
 {
   assert(src != NULL);
 
-  E2SM_DAPP_IndicationHeader_Format0_t* dst = calloc(1, sizeof(E2SM_DAPP_IndicationHeader_Format0_t));
+  E2SM_DAPP_IndicationHeader_Format2_t* dst = calloc(1, sizeof(E2SM_DAPP_IndicationHeader_Format2_t));
+  assert(dst != NULL && "Memory exhausted");
+
+  dst->node_type = (long)src->node_type;
+  dst->node_nb_id = (long)src->node_nb_id;
+
+  int ret = OCTET_STRING_fromBuf(&dst->node_plmn_id, (const char*)src->node_plmn_id, 3);
+  assert(ret == 0 && "OCTET_STRING_fromBuf failed for node_plmn_id");
+
+  if (src->node_cu_du_id_present) {
+    dst->node_cu_du_id = calloc(1, sizeof(long));
+    assert(dst->node_cu_du_id != NULL && "Memory exhausted");
+    *dst->node_cu_du_id = (long)src->node_cu_du_id;
+  }
+
+  return dst;
+}
+
+static E2SM_DAPP_IndicationHeader_Format1_t* cp_ind_hdr_frmt_1(e2sm_dapp_ind_hdr_frmt_1_t const* src)
+{
+  assert(src != NULL);
+
+  E2SM_DAPP_IndicationHeader_Format1_t* dst = calloc(1, sizeof(E2SM_DAPP_IndicationHeader_Format1_t));
   assert(dst != NULL && "Memory exhausted");
 
   dst->ran_function_id = (long)src->ran_function_id;
   dst->dapp_id = (long)src->dapp_id;
+
+  dst->node_type = (long)src->node_type;
+  dst->node_nb_id = (long)src->node_nb_id;
+
+  int ret = OCTET_STRING_fromBuf(&dst->node_plmn_id, (const char*)src->node_plmn_id, 3);
+  assert(ret == 0 && "OCTET_STRING_fromBuf failed for node_plmn_id");
+
+  if (src->node_cu_du_id_present) {
+    dst->node_cu_du_id = calloc(1, sizeof(long));
+    assert(dst->node_cu_du_id != NULL && "Memory exhausted");
+    *dst->node_cu_du_id = (long)src->node_cu_du_id;
+  }
 
   return dst;
 }
@@ -136,9 +177,12 @@ byte_array_t dapp_enc_ind_hdr_asn(e2sm_dapp_ind_hdr_t const* src)
   E2SM_DAPP_IndicationHeader_t dst = {0};
   defer({ ASN_STRUCT_RESET(asn_DEF_E2SM_DAPP_IndicationHeader, &dst); });
 
-  if (src->format == FORMAT_0_E2SM_DAPP_IND_HDR) {
-    dst.ric_indicationHeader_formats.present = E2SM_DAPP_IndicationHeader__ric_indicationHeader_formats_PR_indicationHeader_Format0;
-    dst.ric_indicationHeader_formats.choice.indicationHeader_Format0 = cp_ind_hdr_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_IND_HDR) {
+    dst.ric_indicationHeader_formats.present = E2SM_DAPP_IndicationHeader__ric_indicationHeader_formats_PR_indicationHeader_Format1;
+    dst.ric_indicationHeader_formats.choice.indicationHeader_Format1 = cp_ind_hdr_frmt_1(&src->frmt_1);
+  } else if (src->format == FORMAT_2_E2SM_DAPP_IND_HDR) {
+    dst.ric_indicationHeader_formats.present = E2SM_DAPP_IndicationHeader__ric_indicationHeader_formats_PR_indicationHeader_Format2;
+    dst.ric_indicationHeader_formats.choice.indicationHeader_Format2 = cp_ind_hdr_frmt_2(&src->frmt_2);
   } else {
     assert(0 != 0 && "unknown format type");
   }
@@ -152,13 +196,45 @@ byte_array_t dapp_enc_ind_hdr_asn(e2sm_dapp_ind_hdr_t const* src)
   return ba;
 }
 
-static E2SM_DAPP_IndicationMessage_Format0_t* enc_ind_msg_frmt_0(const e2sm_dapp_ind_msg_frmt_0_t* src)
+static E2SM_DAPP_IndicationMessage_Format2_t* enc_ind_msg_frmt_2(const e2sm_dapp_ind_msg_frmt_2_t* src)
+{
+  assert(src != NULL);
+
+  E2SM_DAPP_IndicationMessage_Format2_t* dst = calloc(1, sizeof(*dst));
+  assert(dst != NULL && "Memory exhausted");
+
+  const dapp_e3_subscription_list_t* subs = &src->dapp_e3_subs;
+  for (size_t i = 0; i < subs->sz_dapp_e3_subscriptions; ++i) {
+    const dapp_e3_subscription_item_t* ir = &subs->dapp_e3_subscriptions[i];
+
+    DAppE3Subscription_Item_t* item = CALLOC(1, sizeof(*item));
+    assert(item != NULL && "Memory exhausted");
+
+    item->dapp_id = (long)ir->dapp_id;
+
+    for (size_t j = 0; j < ir->sz_subscribed_e3_ran_functions; ++j) {
+      unsigned long* rf = CALLOC(1, sizeof(unsigned long));
+      assert(rf != NULL && "Memory exhausted");
+      *rf = (unsigned long)ir->subscribed_e3_ran_functions[j];
+
+      int rc = ASN_SEQUENCE_ADD(&item->subscribed_e3_ran_functions, rf);
+      assert(rc == 0 && "ASN_SEQUENCE_ADD failed");
+    }
+
+    int rc = ASN_SEQUENCE_ADD(&dst->dappE3Subscriptions, item);
+    assert(rc == 0 && "ASN_SEQUENCE_ADD failed");
+  }
+
+  return dst;
+}
+
+static E2SM_DAPP_IndicationMessage_Format1_t* enc_ind_msg_frmt_1(const e2sm_dapp_ind_msg_frmt_1_t* src)
 {
   assert(src != NULL);
   assert(src->data_size > 0);
   assert(src->data != NULL);
 
-  E2SM_DAPP_IndicationMessage_Format0_t* dst = CALLOC(1, sizeof(*dst));
+  E2SM_DAPP_IndicationMessage_Format1_t* dst = CALLOC(1, sizeof(*dst));
   assert(dst != NULL && "Memory exhausted");
 
   dst->data_size = (long)src->data_size;
@@ -175,10 +251,14 @@ byte_array_t dapp_enc_ind_msg_asn(e2sm_dapp_ind_msg_t const* src)
   E2SM_DAPP_IndicationMessage_t dst = {0};
   defer({ ASN_STRUCT_RESET(asn_DEF_E2SM_DAPP_IndicationMessage, &dst); });
 
-  if (src->format == FORMAT_0_E2SM_DAPP_IND_MSG) {
+  if (src->format == FORMAT_1_E2SM_DAPP_IND_MSG) {
     dst.ric_indicationMessage_formats.present =
-        E2SM_DAPP_IndicationMessage__ric_indicationMessage_formats_PR_indicationMessage_Format0;
-    dst.ric_indicationMessage_formats.choice.indicationMessage_Format0 = enc_ind_msg_frmt_0(&src->frmt_0);
+        E2SM_DAPP_IndicationMessage__ric_indicationMessage_formats_PR_indicationMessage_Format1;
+    dst.ric_indicationMessage_formats.choice.indicationMessage_Format1 = enc_ind_msg_frmt_1(&src->frmt_1);
+  } else if (src->format == FORMAT_2_E2SM_DAPP_IND_MSG) {
+    dst.ric_indicationMessage_formats.present =
+        E2SM_DAPP_IndicationMessage__ric_indicationMessage_formats_PR_indicationMessage_Format2;
+    dst.ric_indicationMessage_formats.choice.indicationMessage_Format2 = enc_ind_msg_frmt_2(&src->frmt_2);
   } else {
     assert(0 != 0 && "Unknown format type");
   }
@@ -192,11 +272,11 @@ byte_array_t dapp_enc_ind_msg_asn(e2sm_dapp_ind_msg_t const* src)
   return ba;
 }
 
-static E2SM_DAPP_ControlHeader_Format0_t* enc_ctrl_hdr_frmt_0(e2sm_dapp_ctrl_hdr_frmt_0_t const* src)
+static E2SM_DAPP_ControlHeader_Format1_t* enc_ctrl_hdr_frmt_1(e2sm_dapp_ctrl_hdr_frmt_1_t const* src)
 {
   assert(src != NULL);
 
-  E2SM_DAPP_ControlHeader_Format0_t* dst = calloc(1, sizeof(E2SM_DAPP_ControlHeader_Format0_t));
+  E2SM_DAPP_ControlHeader_Format1_t* dst = calloc(1, sizeof(E2SM_DAPP_ControlHeader_Format1_t));
   assert(dst != NULL && "Memory exhausted");
 
   dst->ran_function_id = (long)src->ran_function_id;
@@ -212,9 +292,9 @@ byte_array_t dapp_enc_ctrl_hdr_asn(e2sm_dapp_ctrl_hdr_t const* src)
   E2SM_DAPP_ControlHeader_t dst = {0};
   defer({ ASN_STRUCT_RESET(asn_DEF_E2SM_DAPP_ControlHeader, &dst); });
 
-  if (src->format == FORMAT_0_E2SM_DAPP_CTRL_HDR) {
-    dst.ric_controlHeader_formats.present = E2SM_DAPP_ControlHeader__ric_controlHeader_formats_PR_controlHeader_Format0;
-    dst.ric_controlHeader_formats.choice.controlHeader_Format0 = enc_ctrl_hdr_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_CTRL_HDR) {
+    dst.ric_controlHeader_formats.present = E2SM_DAPP_ControlHeader__ric_controlHeader_formats_PR_controlHeader_Format1;
+    dst.ric_controlHeader_formats.choice.controlHeader_Format1 = enc_ctrl_hdr_frmt_1(&src->frmt_1);
   } else {
     assert(0 != 0 && "Unknown format");
   }
@@ -228,13 +308,13 @@ byte_array_t dapp_enc_ctrl_hdr_asn(e2sm_dapp_ctrl_hdr_t const* src)
   return ba;
 }
 
-static E2SM_DAPP_ControlMessage_Format0_t* enc_ctrl_msg_frmt_0(e2sm_dapp_ctrl_msg_frmt_0_t const* src)
+static E2SM_DAPP_ControlMessage_Format1_t* enc_ctrl_msg_frmt_1(e2sm_dapp_ctrl_msg_frmt_1_t const* src)
 {
   assert(src != NULL);
   assert(src->data_size > 0);
   assert(src->data != NULL);
 
-  E2SM_DAPP_ControlMessage_Format0_t* dst = CALLOC(1, sizeof(*dst));
+  E2SM_DAPP_ControlMessage_Format1_t* dst = CALLOC(1, sizeof(*dst));
   assert(dst != NULL && "Memory exhausted");
 
   dst->data_size = (long)src->data_size;
@@ -252,13 +332,13 @@ byte_array_t dapp_enc_ctrl_msg_asn(e2sm_dapp_ctrl_msg_t const* src)
   E2SM_DAPP_ControlMessage_t dst = {0};
   defer({ ASN_STRUCT_RESET(asn_DEF_E2SM_DAPP_ControlMessage, &dst); });
 
-  if (src->format == FORMAT_0_E2SM_DAPP_CTRL_MSG) {
-    dst.ric_controlMessage_formats.present = E2SM_DAPP_ControlMessage__ric_controlMessage_formats_PR_controlMessage_Format0;
+  if (src->format == FORMAT_1_E2SM_DAPP_CTRL_MSG) {
+    dst.ric_controlMessage_formats.present = E2SM_DAPP_ControlMessage__ric_controlMessage_formats_PR_controlMessage_Format1;
 
-    dst.ric_controlMessage_formats.choice.controlMessage_Format0 = calloc(1, sizeof(E2SM_DAPP_ControlMessage_Format0_t));
-    assert(dst.ric_controlMessage_formats.choice.controlMessage_Format0 != NULL && "Memory exhausted");
+    dst.ric_controlMessage_formats.choice.controlMessage_Format1 = calloc(1, sizeof(E2SM_DAPP_ControlMessage_Format1_t));
+    assert(dst.ric_controlMessage_formats.choice.controlMessage_Format1 != NULL && "Memory exhausted");
 
-    dst.ric_controlMessage_formats.choice.controlMessage_Format0 = enc_ctrl_msg_frmt_0(&src->frmt_0);
+    dst.ric_controlMessage_formats.choice.controlMessage_Format1 = enc_ctrl_msg_frmt_1(&src->frmt_1);
   } else {
     assert(0 != 0 && "Unknown format type");
   }
@@ -272,11 +352,11 @@ byte_array_t dapp_enc_ctrl_msg_asn(e2sm_dapp_ctrl_msg_t const* src)
   return ba;
 }
 
-static E2SM_DAPP_ControlOutcome_Format0_t* enc_ctrl_out_frmt_0(e2sm_dapp_ctrl_out_frmt_0_t const* src)
+static E2SM_DAPP_ControlOutcome_Format1_t* enc_ctrl_out_frmt_1(e2sm_dapp_ctrl_out_frmt_1_t const* src)
 {
   assert(src != NULL);
 
-  E2SM_DAPP_ControlOutcome_Format0_t* dst = calloc(1, sizeof(E2SM_DAPP_ControlOutcome_Format0_t));
+  E2SM_DAPP_ControlOutcome_Format1_t* dst = calloc(1, sizeof(E2SM_DAPP_ControlOutcome_Format1_t));
   assert(dst != NULL && "Memory exhausted");
 
   return dst;
@@ -289,9 +369,9 @@ byte_array_t dapp_enc_ctrl_out_asn(e2sm_dapp_ctrl_out_t const* src)
   E2SM_DAPP_ControlOutcome_t dst = {0};
   defer({ ASN_STRUCT_RESET(asn_DEF_E2SM_DAPP_ControlOutcome, &dst); });
 
-  if (src->format == FORMAT_0_E2SM_DAPP_CTRL_OUT) {
-    dst.ric_controlOutcome_formats.present = E2SM_DAPP_ControlOutcome__ric_controlOutcome_formats_PR_controlOutcome_Format0;
-    dst.ric_controlOutcome_formats.choice.controlOutcome_Format0 = enc_ctrl_out_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_CTRL_OUT) {
+    dst.ric_controlOutcome_formats.present = E2SM_DAPP_ControlOutcome__ric_controlOutcome_formats_PR_controlOutcome_Format1;
+    dst.ric_controlOutcome_formats.choice.controlOutcome_Format1 = enc_ctrl_out_frmt_1(&src->frmt_1);
   } else {
     assert(0 != 0 && "Unknown format");
   }
@@ -329,6 +409,38 @@ static RANFunctionDefinition_EventTrigger_t enc_ran_func_def_ev_trg(ran_func_def
   return dst;
 }
 
+static DAppE3Subscription_List_t* enc_dapp_e3_subscription_list(dapp_e3_subscription_list_t const* src)
+{
+  assert(src != NULL);
+  assert(src->sz_dapp_e3_subscriptions > 0 && src->sz_dapp_e3_subscriptions < 256);
+
+  DAppE3Subscription_List_t* dst = calloc(1, sizeof(DAppE3Subscription_List_t));
+  assert(dst != NULL && "Memory exhausted");
+
+  for (size_t i = 0; i < src->sz_dapp_e3_subscriptions; ++i) {
+    const dapp_e3_subscription_item_t* ir = &src->dapp_e3_subscriptions[i];
+
+    DAppE3Subscription_Item_t* item = CALLOC(1, sizeof(*item));
+    assert(item != NULL && "Memory exhausted");
+
+    item->dapp_id = (long)ir->dapp_id;
+
+    for (size_t j = 0; j < ir->sz_subscribed_e3_ran_functions; ++j) {
+      unsigned long* rf = CALLOC(1, sizeof(unsigned long));
+      assert(rf != NULL && "Memory exhausted");
+      *rf = (unsigned long)ir->subscribed_e3_ran_functions[j];
+
+      int rc = ASN_SEQUENCE_ADD(&item->subscribed_e3_ran_functions, rf);
+      assert(rc == 0 && "ASN_SEQUENCE_ADD failed for subscribed_e3_ran_functions");
+    }
+
+    int rc = ASN_SEQUENCE_ADD(dst, item);
+    assert(rc == 0 && "ASN_SEQUENCE_ADD failed for DAppE3Subscription_List");
+  }
+
+  return dst;
+}
+
 static RANFunctionDefinition_Report_t enc_ran_func_def_report(ran_func_def_report_dapp_sm_t const* src)
 {
   assert(src != NULL);
@@ -345,13 +457,13 @@ static RANFunctionDefinition_Report_t enc_ran_func_def_report(ran_func_def_repor
 
     item->ric_ReportStyle_Name = copy_ba_to_ostring(ir->name);
 
-    item->ric_SupportedEventTriggerStyle_Type = ir->ev_trig_type;
-
-    item->ric_ReportActionFormat_Type = ir->act_frmt_type;
-
     item->ric_IndicationHeaderFormat_Type = ir->ind_hdr_type;
 
     item->ric_IndicationMessageFormat_Type = ir->ind_msg_type;
+
+    if (ir->dapp_e3_subs != NULL) {
+      item->dappE3Subscriptions = enc_dapp_e3_subscription_list(ir->dapp_e3_subs);
+    }
 
     int rc = ASN_SEQUENCE_ADD(&dst.ric_ReportStyle_List.list, item);
     assert(rc == 0 && "ASN_SEQUENCE_ADD failed for ReportStyle_List");
@@ -381,6 +493,10 @@ static RANFunctionDefinition_Control_t enc_ran_func_def_ctrl(ran_func_def_ctrl_d
     item->ric_ControlMessageFormat_Type = ir->msg;
 
     item->ric_ControlOutcomeFormat_Type = ir->out_frmt;
+
+    if (ir->dapp_e3_subs != NULL) {
+      item->dappE3Subscriptions = enc_dapp_e3_subscription_list(ir->dapp_e3_subs);
+    }
 
     int rc = ASN_SEQUENCE_ADD(&dst.ric_ControlStyle_List.list, item);
     assert(rc == 0 && "ASN_SEQUENCE_ADD failed for ControlStyle_List");

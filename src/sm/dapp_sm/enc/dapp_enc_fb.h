@@ -11,7 +11,7 @@ typedef struct {
 
 byte_array_t dapp_enc_event_trigger_fb(e2sm_dapp_event_trigger_t const* event_trigger);
 
-byte_array_t dapp_enc_action_def_fb(e2sm_dapp_action_def_t const*);
+byte_array_t dapp_enc_action_def_fb(e2sm_dapp_action_def_t const* action_def);
 
 byte_array_t dapp_enc_ind_hdr_fb(e2sm_dapp_ind_hdr_t const*);
 

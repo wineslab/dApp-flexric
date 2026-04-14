@@ -8,6 +8,10 @@ void free_seq_report_sty_dapp_sm(seq_report_sty_dapp_sm_t* src)
   assert(src->name.len > 0 && src->name.len < 151);
   free_byte_array(src->name);
 
+  if (src->dapp_e3_subs != NULL) {
+    free_dapp_e3_subscription_list(src->dapp_e3_subs);
+    free(src->dapp_e3_subs);
+  }
 }
 
 seq_report_sty_dapp_sm_t cp_seq_report_sty_dapp_sm(seq_report_sty_dapp_sm_t const* src)
@@ -20,13 +24,15 @@ seq_report_sty_dapp_sm_t cp_seq_report_sty_dapp_sm(seq_report_sty_dapp_sm_t cons
   assert(src->name.len > 0 && src->name.len < 151);
   dst.name = copy_byte_array(src->name);
 
-  dst.ev_trig_type = src->ev_trig_type;
-
-  dst.act_frmt_type = src->act_frmt_type;
-
   dst.ind_hdr_type = src->ind_hdr_type;
 
   dst.ind_msg_type = src->ind_msg_type;
+
+  if (src->dapp_e3_subs != NULL) {
+    dst.dapp_e3_subs = calloc(1, sizeof(dapp_e3_subscription_list_t));
+    assert(dst.dapp_e3_subs != NULL && "Memory exhausted");
+    *dst.dapp_e3_subs = cp_dapp_e3_subscription_list(src->dapp_e3_subs);
+  }
 
   return dst;
 }
@@ -47,17 +53,17 @@ bool eq_seq_report_sty_dapp_sm(seq_report_sty_dapp_sm_t const* m0, seq_report_st
   if (eq_byte_array(&m0->name, &m1->name) == false)
     return false;
 
-  if (m0->ev_trig_type != m1->ev_trig_type)
-    return false;
-
-  if (m0->act_frmt_type != m1->act_frmt_type)
-    return false;
-
   if (m0->ind_hdr_type != m1->ind_hdr_type)
     return false;
 
   if (m0->ind_msg_type != m1->ind_msg_type)
     return false;
 
-  return true;
+  if (m0->dapp_e3_subs == NULL && m1->dapp_e3_subs == NULL)
+    return true;
+
+  if (m0->dapp_e3_subs == NULL || m1->dapp_e3_subs == NULL)
+    return false;
+
+  return eq_dapp_e3_subscription_list(m0->dapp_e3_subs, m1->dapp_e3_subs);
 }

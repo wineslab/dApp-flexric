@@ -28,6 +28,9 @@
  *
  * @return true on successful decode of a known SM, false otherwise.
  */
-__attribute__((visibility("default"))) bool dapp_dec_e3_indication(uint32_t ran_function_id, const uint8_t* buf, size_t len, dapp_e3_ind_payload_t* out);
+__attribute__((visibility("default"))) bool dapp_dec_e3_indication(uint32_t ran_function_id,
+                                                                   const uint8_t* buf,
+                                                                   size_t len,
+                                                                   dapp_e3_ind_payload_t* out);
 
 #endif

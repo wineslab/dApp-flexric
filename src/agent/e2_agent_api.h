@@ -39,5 +39,7 @@ void stop_agent_api(void);
 
 void async_event_agent_api(uint32_t ric_req_id, void* ind_data);
 
+void trigger_ric_service_update_api(void);
+
 #endif
 

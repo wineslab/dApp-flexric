@@ -16,7 +16,7 @@ RANfunction-Name ::= 										SEQUENCE{
     															ranFunction-ShortName						PrintableString(SIZE(1..150,...)),
     															ranFunction-E2SM-OID						PrintableString(SIZE(1..1000,...)),
     															ranFunction-Description						PrintableString(SIZE(1..150,...)),
-    															ranFunction-Instance						INTEGER										OPTIONAL,
+    															ranFunction-Instance						INTEGER															OPTIONAL,
     															...
 }
 
@@ -29,6 +29,10 @@ RANfunction-Name ::= 										SEQUENCE{
 
 maxE2SMDAPPIndMsgSize                                       INTEGER ::= 32768
 maxE2SMDAPPCtrlMsgSize                                      INTEGER ::= 32768
+maxnoofDApps                                                INTEGER ::= 256
+maxnoofSubscribedE3RANFunctions                             INTEGER ::= 64
+maxnoofDAPPReportStyles                                     INTEGER ::= 2
+maxnoofDAPPControlStyles                                    INTEGER ::= 1
 
 -- **************************************************************
 -- Event Trigger OCTET STRING contents
@@ -36,36 +40,33 @@ maxE2SMDAPPCtrlMsgSize                                      INTEGER ::= 32768
 
 E2SM-DAPP-EventTrigger ::= 									SEQUENCE {
 																ric-eventTrigger-formats CHOICE {
-																	eventTrigger-Format0					E2SM-DAPP-EventTrigger-Format0,
+																	eventTrigger-Format1					E2SM-DAPP-EventTrigger-Format1,
 																	...
 																},
 																...
 }
 
-E2SM-DAPP-EventTrigger-Format0 ::= 							SEQUENCE {
+E2SM-DAPP-EventTrigger-Format1 ::= 							SEQUENCE {
 
 }
-
-
 
 
 -- **************************************************************
 -- Action Definition OCTET STRING contents
 -- **************************************************************
 
-E2SM-DAPP-ActionDefinition ::= 								SEQUENCE {
-																ric-Style-Type								RIC-Style-Type,
-																ric-actionDefinition-formats CHOICE {
-																	actionDefinition-Format0				E2SM-DAPP-ActionDefinition-Format0,
-																	...
-																},
-																...
+E2SM-DAPP-ActionDefinition ::=                              SEQUENCE {
+                                                                ric-Style-Type                              RIC-Style-Type,
+                                                                actionDefinition-formats CHOICE {
+                                                                    actionDefinition-Format1                E2SM-DAPP-ActionDefinition-Format1,
+                                                                    ...
+                                                                },
+                                                                ...
 }
 
-E2SM-DAPP-ActionDefinition-Format0 ::= 						SEQUENCE {
+E2SM-DAPP-ActionDefinition-Format1 ::=                      SEQUENCE {
 
 }
-
 
 
 
@@ -76,10 +77,9 @@ E2SM-DAPP-ActionDefinition-Format0 ::= 						SEQUENCE {
 RANFunctionDefinition-Report-Item ::= 						SEQUENCE {
 																ric-ReportStyle-Type                 		RIC-Style-Type,
 																ric-ReportStyle-Name                 		RIC-Style-Name,
-																ric-SupportedEventTriggerStyle-Type  		RIC-Style-Type,
-																ric-ReportActionFormat-Type          		RIC-Format-Type,
 																ric-IndicationHeaderFormat-Type      		RIC-Format-Type,
 																ric-IndicationMessageFormat-Type     		RIC-Format-Type,
+																dappE3Subscriptions                         DAppE3Subscription-List                           				OPTIONAL,
 																...
 }
 
@@ -89,6 +89,7 @@ RANFunctionDefinition-Control-Item ::= 						SEQUENCE {
 																ric-ControlHeaderFormat-Type  				RIC-Format-Type,
 																ric-ControlMessageFormat-Type 				RIC-Format-Type,
 																ric-ControlOutcomeFormat-Type 				RIC-Format-Type,
+																dappE3Subscriptions                         DAppE3Subscription-List                           				OPTIONAL,
 																...
 }
 
@@ -101,15 +102,28 @@ RANFunctionDefinition-Control-Item ::= 						SEQUENCE {
 
 E2SM-DAPP-IndicationHeader ::= 								SEQUENCE {
 																ric-indicationHeader-formats CHOICE {
-																		indicationHeader-Format0			E2SM-DAPP-IndicationHeader-Format0,
+																		indicationHeader-Format1			E2SM-DAPP-IndicationHeader-Format1,
+																		indicationHeader-Format2			E2SM-DAPP-IndicationHeader-Format2,
 																		...
 																	},
 																	...
 }
 
-E2SM-DAPP-IndicationHeader-Format0 ::=                      SEQUENCE {
-                                                                ran-function-id      INTEGER (0..4294967295, ...),
-                                                                dapp-id              INTEGER (0..4294967295, ...),
+E2SM-DAPP-IndicationHeader-Format1 ::=                      SEQUENCE {
+                                                                ran-function-id      						INTEGER (0..4294967295, ...),
+                                                                dapp-id              						INTEGER (0..4294967295, ...),
+																node-type            						INTEGER (0..255, ...),
+																node-plmn-id         						OCTET STRING (SIZE(3)),
+																node-nb-id           						INTEGER (0..4294967295, ...),
+																node-cu-du-id        						INTEGER (0..4294967295, ...) 									OPTIONAL,
+                                                                ...
+}
+
+E2SM-DAPP-IndicationHeader-Format2 ::=                      SEQUENCE {
+																node-type            						INTEGER (0..255, ...),
+																node-plmn-id         						OCTET STRING (SIZE(3)),
+																node-nb-id           						INTEGER (0..4294967295, ...),
+																node-cu-du-id        						INTEGER (0..4294967295, ...) 									OPTIONAL,
                                                                 ...
 }
 
@@ -122,15 +136,21 @@ E2SM-DAPP-IndicationHeader-Format0 ::=                      SEQUENCE {
 
 E2SM-DAPP-IndicationMessage ::= 							SEQUENCE {
 																ric-indicationMessage-formats CHOICE {
-																	indicationMessage-Format0				E2SM-DAPP-IndicationMessage-Format0,
+																	indicationMessage-Format1				E2SM-DAPP-IndicationMessage-Format1,
+																	indicationMessage-Format2				E2SM-DAPP-IndicationMessage-Format2,
 																	...
 																},
 																...
 }
 
-E2SM-DAPP-IndicationMessage-Format0 ::=                     SEQUENCE {
-                                                                data-size   INTEGER (0..maxE2SMDAPPIndMsgSize),
-                                                                data        OCTET STRING (SIZE(1..maxE2SMDAPPIndMsgSize)),
+E2SM-DAPP-IndicationMessage-Format1 ::=                     SEQUENCE {
+                                                                data-size   								INTEGER (0..maxE2SMDAPPIndMsgSize),
+                                                                data        								OCTET STRING (SIZE(1..maxE2SMDAPPIndMsgSize)),
+                                                                ...
+}
+
+E2SM-DAPP-IndicationMessage-Format2 ::=                     SEQUENCE {
+                                                                dappE3Subscriptions     					DAppE3Subscription-List,
                                                                 ...
 }
 
@@ -143,13 +163,13 @@ E2SM-DAPP-IndicationMessage-Format0 ::=                     SEQUENCE {
 
 E2SM-DAPP-ControlHeader ::= 								SEQUENCE {
 																ric-controlHeader-formats CHOICE {
-																	controlHeader-Format0					E2SM-DAPP-ControlHeader-Format0,
+																	controlHeader-Format1					E2SM-DAPP-ControlHeader-Format1,
 																	...
 																},
 																...
 }
 
-E2SM-DAPP-ControlHeader-Format0 ::= 						SEQUENCE {
+E2SM-DAPP-ControlHeader-Format1 ::= 						SEQUENCE {
 	                                                            ran-function-id      						INTEGER (0..4294967295, ...),
                                                                 dapp-id              						INTEGER (0..4294967295, ...),
                                                                 ...
@@ -164,13 +184,13 @@ E2SM-DAPP-ControlHeader-Format0 ::= 						SEQUENCE {
 
 E2SM-DAPP-ControlMessage ::= 								SEQUENCE {
 																ric-controlMessage-formats CHOICE {
-																	controlMessage-Format0					E2SM-DAPP-ControlMessage-Format0,
+																	controlMessage-Format1					E2SM-DAPP-ControlMessage-Format1,
 																	...
 																},
 																...
 }
 
-E2SM-DAPP-ControlMessage-Format0 ::= 						SEQUENCE {
+E2SM-DAPP-ControlMessage-Format1 ::= 						SEQUENCE {
                                                                 data-size   								INTEGER (0..maxE2SMDAPPCtrlMsgSize),
                                                                 data        								OCTET STRING (SIZE(1..maxE2SMDAPPCtrlMsgSize)),
                                                                 ...
@@ -185,18 +205,29 @@ E2SM-DAPP-ControlMessage-Format0 ::= 						SEQUENCE {
 
 E2SM-DAPP-ControlOutcome ::= 								SEQUENCE {
 																ric-controlOutcome-formats CHOICE {
-																	controlOutcome-Format0					E2SM-DAPP-ControlOutcome-Format0,
+																	controlOutcome-Format1					E2SM-DAPP-ControlOutcome-Format1,
 																	...
 																},
 																...
 }
 
-E2SM-DAPP-ControlOutcome-Format0 ::= 						SEQUENCE {
+E2SM-DAPP-ControlOutcome-Format1 ::= 						SEQUENCE {
 
 }
 
 
+-- **************************************************************
+-- dApp E3 Subscription Info
+-- **************************************************************
+SubscribedE3RANFunction-ID ::=                              INTEGER 										(0..4294967295, ...)
 
+DAppE3Subscription-Item ::=                                 SEQUENCE {
+                                                                dapp-id                 					INTEGER (0..4294967295, ...),
+                                                                subscribed-e3-ran-functions 				SEQUENCE (SIZE(1..maxnoofSubscribedE3RANFunctions)) OF SubscribedE3RANFunction-ID,
+                                                                ...
+}
+
+DAppE3Subscription-List ::=                                   SEQUENCE 										(SIZE(0..maxnoofDApps)) OF DAppE3Subscription-Item
 
 -- **************************************************************
 -- RAN Function Definition IEs
@@ -229,7 +260,7 @@ RANFunctionDefinition-EventTrigger ::= 						SEQUENCE {
 -- **************************************************************
 
 RANFunctionDefinition-Report ::= 							SEQUENCE {
-    															ric-ReportStyle-List 						SEQUENCE (SIZE(1)) OF RANFunctionDefinition-Report-Item,
+    															ric-ReportStyle-List 						SEQUENCE (SIZE(1..maxnoofDAPPReportStyles)) OF RANFunctionDefinition-Report-Item,
     															...
 }
 
@@ -241,7 +272,7 @@ RANFunctionDefinition-Report ::= 							SEQUENCE {
 -- **************************************************************
 
 RANFunctionDefinition-Control ::= 							SEQUENCE {
-    															ric-ControlStyle-List 						SEQUENCE (SIZE(1)) OF RANFunctionDefinition-Control-Item,
+    															ric-ControlStyle-List 						SEQUENCE (SIZE(1..maxnoofDAPPControlStyles)) OF RANFunctionDefinition-Control-Item,
     															...
 }
 

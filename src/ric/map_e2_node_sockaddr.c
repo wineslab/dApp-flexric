@@ -160,3 +160,21 @@ sctp_info_t find_map_e2_node_sad(map_e2_node_sockaddr_t* m, global_e2_node_id_t 
   return *s;
 }
 
+global_e2_node_id_t find_map_sad_e2_node(map_e2_node_sockaddr_t* m, sctp_info_t const* s)
+{
+  assert(m != NULL);
+  assert(s != NULL);
+
+  lock_guard(&m->mtx);
+
+  assoc_rb_tree_t* tree = &m->map.right;
+
+  void* it = assoc_front(tree);
+  void* end = assoc_end(tree);
+
+  it = find_if(tree, it, end, (sctp_info_t*)s, eq_sctp_info_wrapper);
+  assert(it != end && "SCTP info not found in the map");
+
+  global_e2_node_id_t* id = assoc_value(tree, it);
+  return cp_global_e2_node_id(id);
+}

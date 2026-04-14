@@ -69,20 +69,22 @@ file(GLOB ASN_DAPP_SRC
   ${ASN1C_OUTPUT_DIR}/constr_SET_OF_rfill.c
   ${ASN1C_OUTPUT_DIR}/constr_SET_OF_xer.c
   ${ASN1C_OUTPUT_DIR}/constr_TYPE.c
-  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ActionDefinition.c
-  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ActionDefinition-Format0.c
   ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ControlHeader.c
-  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ControlHeader-Format0.c
+  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ControlHeader-Format1.c
   ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ControlMessage.c
-  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ControlMessage-Format0.c
+  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ControlMessage-Format1.c
   ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ControlOutcome.c
-  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ControlOutcome-Format0.c
+  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ControlOutcome-Format1.c
   ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-EventTrigger.c
-  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-EventTrigger-Format0.c
+  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-EventTrigger-Format1.c
+  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ActionDefinition.c
+  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-ActionDefinition-Format1.c
   ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-IndicationHeader.c
-  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-IndicationHeader-Format0.c
+  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-IndicationHeader-Format1.c
+  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-IndicationHeader-Format2.c
   ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-IndicationMessage.c
-  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-IndicationMessage-Format0.c
+  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-IndicationMessage-Format1.c
+  ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-IndicationMessage-Format2.c
   ${ASN1C_OUTPUT_DIR}/E2SM-DAPP-RANFunctionDefinition.c
   ${ASN1C_OUTPUT_DIR}/EXTERNAL.c
   ${ASN1C_OUTPUT_DIR}/GraphicString.c
@@ -119,6 +121,9 @@ file(GLOB ASN_DAPP_SRC
   ${ASN1C_OUTPUT_DIR}/RANFunctionDefinition-EventTrigger.c
   ${ASN1C_OUTPUT_DIR}/RANFunctionDefinition-Report.c
   ${ASN1C_OUTPUT_DIR}/RANFunctionDefinition-Report-Item.c
+  ${ASN1C_OUTPUT_DIR}/DAppE3Subscription-Item.c
+  ${ASN1C_OUTPUT_DIR}/DAppE3Subscription-List.c
+  ${ASN1C_OUTPUT_DIR}/SubscribedE3RANFunction-ID.c
   ${ASN1C_OUTPUT_DIR}/RANfunction-Name.c
   ${ASN1C_OUTPUT_DIR}/RIC-Format-Type.c
   ${ASN1C_OUTPUT_DIR}/RIC-Style-Name.c

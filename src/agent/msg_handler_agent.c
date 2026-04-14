@@ -29,6 +29,8 @@
 #include "util/compare.h"
 
 #include <assert.h>
+#include <limits.h>
+#include <stdatomic.h>
 #include <stdio.h>
 
 static
@@ -50,13 +52,14 @@ bool check_valid_msg_type(e2_msg_type_t msg_type )
       || msg_type == E2_CONNECTION_UPDATE;
 }
 
+#define APERIODIC_FD_THRESHOLD (INT_MAX / 2)
+
 static inline
 bool not_aperiodic_ind_event(int fd)
 {
   assert(fd > -1);
 
-  // 0 value used for aperiodic indication events
-  return fd != 0;
+  return fd > 0 && fd < APERIODIC_FD_THRESHOLD;
 }
 
 static
@@ -87,8 +90,7 @@ bool stop_ind_event(e2_agent_t* ag, ric_gen_id_t id)
 
   void (*free_ind_event)(void*) = NULL;
   int* fd = bi_map_extract_right(&ag->ind_event, &tmp, sizeof(tmp), free_ind_event);
-  assert(*fd > -1);
-  //printf("fd value in stopping pending event = %d \n", *fd);
+  assert(fd != NULL);
  
   if(not_aperiodic_ind_event(*fd))
     rm_fd_asio_agent(&ag->io, *fd);
@@ -169,6 +171,8 @@ ric_subscription_response_t generate_subscription_response(ric_gen_id_t const* r
   return sr; 
 }
 
+static _Atomic int next_aperiodic_fd = INT_MAX;
+
 e2ap_msg_t e2ap_handle_subscription_request_agent(e2_agent_t* ag, const e2ap_msg_t* msg)
 {
   assert(ag != NULL);
@@ -208,7 +212,8 @@ e2ap_msg_t e2ap_handle_subscription_request_agent(e2_agent_t* ag, const e2ap_msg
     ev.free_subs_aperiodic = subs.aper.free_aper_subs;
     // Aperiodic indication generated i.e., the RAN will generate it via 
     // void async_event_agent_api(uint32_t ric_req_id, void* ind_data);
-    int fd = 0;
+    int fd = atomic_fetch_sub(&next_aperiodic_fd, 1);
+    assert(fd > APERIODIC_FD_THRESHOLD && "Too many aperiodic subscriptions");
     lock_guard(&ag->mtx_ind_event);
     bi_map_insert(&ag->ind_event, &fd, sizeof(int), &ev, sizeof(ev));
   } else {
@@ -445,10 +450,21 @@ e2ap_msg_t e2ap_handle_service_update_ack_agent(e2_agent_t* ag, const e2ap_msg_t
 {
   assert(ag != NULL);
   assert(msg != NULL);
-  assert(0!=0 && "Not implemented");
+  assert(msg->type == RIC_SERVICE_UPDATE_ACKNOWLEDGE);
+
+  const ric_service_update_ack_t* ack = &msg->u_msgs.ric_serv_updt_ack;
+  printf("[E2-AGENT]: RIC SERVICE UPDATE ACKNOWLEDGE rx (accepted=%zu, rejected=%zu)\n",
+         ack->len_accepted, ack->len_rejected);
+
+  if (ack->len_rejected > 0) {
+    for (size_t i = 0; i < ack->len_rejected; ++i) {
+      printf("[E2-AGENT]: RAN function %d (rev %d) REJECTED by RIC\n",
+             ack->rejected[i].id, ack->rejected[i].cause.present);
+    }
+  }
 
   e2ap_msg_t ans = {.type = NONE_E2_MSG_TYPE};
-  return ans; 
+  return ans;
 }
 
 e2ap_msg_t e2ap_handle_service_update_failure_agent(e2_agent_t* ag, const e2ap_msg_t* msg)

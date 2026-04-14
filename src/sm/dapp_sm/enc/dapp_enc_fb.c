@@ -1,20 +1,20 @@
 #include "dapp_enc_fb.h"
 #include <assert.h>
 
-byte_array_t dapp_enc_action_def_fb(dapp_action_def_t const* action_def)
-{
-  assert(0 != 0 && "Not implemented");
-
-  assert(action_def != NULL);
-  byte_array_t ba = {0};
-  return ba;
-}
-
 byte_array_t dapp_enc_ind_hdr_fb(dapp_ind_hdr_t const* ind_hdr)
 {
   assert(0 != 0 && "Not implemented");
 
   assert(ind_hdr != NULL);
+  byte_array_t ba = {0};
+  return ba;
+}
+
+byte_array_t dapp_enc_action_def_fb(e2sm_dapp_action_def_t const* action_def)
+{
+  assert(0 != 0 && "Not implemented");
+
+  assert(action_def != NULL);
   byte_array_t ba = {0};
   return ba;
 }

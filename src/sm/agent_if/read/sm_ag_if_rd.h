@@ -72,7 +72,6 @@ typedef struct{
 typedef struct{
   dapp_ind_data_t ind;
   // Non-owning pointer
-  e2sm_dapp_action_def_t const* act_def;
   uint32_t ric_id;
 } dapp_rd_ind_data_t;
 

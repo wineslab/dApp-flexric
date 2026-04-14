@@ -9,7 +9,7 @@ typedef struct {
 
 __attribute__((visibility("default"))) byte_array_t dapp_enc_event_trigger_asn(e2sm_dapp_event_trigger_t const* event_trigger);
 
-__attribute__((visibility("default"))) byte_array_t dapp_enc_action_def_asn(e2sm_dapp_action_def_t const*);
+__attribute__((visibility("default"))) byte_array_t dapp_enc_action_def_asn(e2sm_dapp_action_def_t const* action_def);
 
 __attribute__((visibility("default"))) byte_array_t dapp_enc_ind_hdr_asn(e2sm_dapp_ind_hdr_t const*);
 

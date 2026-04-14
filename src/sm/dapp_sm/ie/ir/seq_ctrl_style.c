@@ -1,6 +1,7 @@
 #include "seq_ctrl_style.h"
 
 #include <assert.h>
+#include <string.h>
 
 void free_seq_ctrl_style_dapp_sm(seq_ctrl_style_dapp_sm_t* src)
 {
@@ -12,6 +13,10 @@ void free_seq_ctrl_style_dapp_sm(seq_ctrl_style_dapp_sm_t* src)
     src->name.len = 0;
   }
 
+  if (src->dapp_e3_subs != NULL) {
+    free_dapp_e3_subscription_list(src->dapp_e3_subs);
+    free(src->dapp_e3_subs);
+  }
 }
 
 bool eq_seq_ctrl_style_dapp_sm(seq_ctrl_style_dapp_sm_t const* m0, seq_ctrl_style_dapp_sm_t const* m1)
@@ -44,7 +49,13 @@ bool eq_seq_ctrl_style_dapp_sm(seq_ctrl_style_dapp_sm_t const* m0, seq_ctrl_styl
   if (m0->out_frmt != m1->out_frmt)
     return false;
 
-  return true;
+  if (m0->dapp_e3_subs == NULL && m1->dapp_e3_subs == NULL)
+    return true;
+
+  if (m0->dapp_e3_subs == NULL || m1->dapp_e3_subs == NULL)
+    return false;
+
+  return eq_dapp_e3_subscription_list(m0->dapp_e3_subs, m1->dapp_e3_subs);
 }
 
 seq_ctrl_style_dapp_sm_t cp_seq_ctrl_style_dapp_sm(seq_ctrl_style_dapp_sm_t const* src)
@@ -70,6 +81,12 @@ seq_ctrl_style_dapp_sm_t cp_seq_ctrl_style_dapp_sm(seq_ctrl_style_dapp_sm_t cons
   dst.msg = src->msg;
 
   dst.out_frmt = src->out_frmt;
+
+  if (src->dapp_e3_subs != NULL) {
+    dst.dapp_e3_subs = calloc(1, sizeof(dapp_e3_subscription_list_t));
+    assert(dst.dapp_e3_subs != NULL && "Memory exhausted");
+    *dst.dapp_e3_subs = cp_dapp_e3_subscription_list(src->dapp_e3_subs);
+  }
 
   return dst;
 }

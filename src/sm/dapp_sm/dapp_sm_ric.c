@@ -28,9 +28,22 @@ typedef struct {
 /**
  * @brief Build an E2 subscription for the DAPP SM on the RIC.
  *
- * - Takes a high-level dapp_sub_data_t (event trigger + action def).
- * - Encodes the event trigger and a single action definition into byte arrays.
- * - Returns an sm_subs_data_t ready to be sent over E2AP.
+ * Takes a high-level dapp_sub_data_t containing:
+ *   - Event trigger (common to all styles, Format 1)
+ *   - Action definition (optional, carries the report style type)
+ *
+ * Encodes both into byte arrays and returns an sm_subs_data_t ready
+ * to be sent over E2AP in a RIC SUBSCRIPTION REQUEST.
+ *
+ * The action definition's ric_style_type determines what indications
+ * the agent will send:
+ *   - Style 1: Format 1 only (E3 data reports)
+ *   - Style 2: Format 2 only (E3 subscription map)
+ *
+ * @param sm_ric  The RIC-side DAPP SM instance (codec context).
+ * @param cmd     Pointer to a dapp_sub_data_t with event trigger and
+ *                action definition.
+ * @return        Encoded subscription data (event trigger + action definition).
  */
 static sm_subs_data_t on_subscription_dapp_sm_ric(sm_ric_t const* sm_ric, void* cmd)
 {
@@ -41,19 +54,16 @@ static sm_subs_data_t on_subscription_dapp_sm_ric(sm_ric_t const* sm_ric, void* 
   sm_subs_data_t dst = {0};
 
   /* Encode E2SM-DAPP event trigger */
-  const byte_array_t ba = dapp_enc_event_trigger(&sm->enc, &src->et);
-  dst.event_trigger = ba.buf;
-  dst.len_et = ba.len;
+  const byte_array_t ba_et = dapp_enc_event_trigger(&sm->enc, &src->et);
+  dst.event_trigger = ba_et.buf;
+  dst.len_et = ba_et.len;
 
-  /* Currently only one Action Definition is supported */
-  assert(src->sz_ad > 0 && src->sz_ad == 1 && "Only one action definition supported");
-  assert(src->ad != NULL);
-
-  /* Encode E2SM-DAPP Action Definition */
-  const byte_array_t ba_ad = dapp_enc_action_def(&sm->enc, src->ad);
-  assert(ba_ad.len < 10 * 1024 && "Really encoding so much data?");
-  dst.action_def = ba_ad.buf;
-  dst.len_ad = ba_ad.len;
+  /* Encode E2SM-DAPP action definition */
+  if (src->action_def != NULL) {
+    const byte_array_t ba_ad = dapp_enc_action_def(&sm->enc, src->action_def);
+    dst.action_def = ba_ad.buf;
+    dst.len_ad = ba_ad.len;
+  }
 
   return dst;
 }
@@ -61,29 +71,26 @@ static sm_subs_data_t on_subscription_dapp_sm_ric(sm_ric_t const* sm_ric, void* 
 /**
  * @brief RIC-side indication handler for the DAPP service model.
  *
- * This function is called when the RIC receives an indication message
- * for the DAPP SM from the E2 agent. It performs a two-stage decode:
+ * Called when the RIC receives an indication message for the DAPP SM
+ * from the E2 agent. Performs a two-stage decode:
  *
  *  1) E2SM-DAPP layer:
- *     - Decodes the indication header and message using the DAPP encoder/decoder
- *       context stored in @p sm_ric (sm_dapp_ric_t).
- *     - Fills dst.dapp.ind.hdr and dst.dapp.ind.msg accordingly.
+ *     - Decodes the indication header and message using the DAPP codec.
+ *     - Fills dst.dapp.ind.hdr and dst.dapp.ind.msg.
  *
- *  2) Inner E3 payload:
- *     - Assumes the indication message is in FORMAT_0_E2SM_DAPP_IND_MSG.
- *     - Extracts the RAN function ID from the decoded header.
- *     - If msg.format-0 carries a non-empty data buffer, it calls
- *       dapp_dec_e3_indication() to decode the inner E3 payload into
- *       dst.dapp.ind.e3.
- *     - If no data is present, sets dst.dapp.ind.e3.type = DAPP_E3_SM_NONE.
+ *  2) Inner payload (format-dependent):
+ *     - Format 1 (E3 data report):
+ *       Extracts the RAN function ID from the header. If the message
+ *       carries a non-empty data buffer, calls dapp_dec_e3_indication()
+ *       to decode the inner E3 payload into dst.dapp.ind.e3.
+ *     - Format 2 (subscription map):
+ *       The subscription list is already fully decoded by the E2SM-DAPP
+ *       message decoder. Sets dst.dapp.ind.e3.type = DAPP_E3_SM_NONE
+ *       (no inner E3 payload).
  *
- * The function returns a fully-populated sm_ag_if_rd_ind_t structure of
- * type DAPP_STATS_V0, which is then consumed by the upper layers in the RIC.
- *
- * @param sm_ric  Pointer to the RIC-side DAPP SM instance (base + codec state).
+ * @param sm_ric  The RIC-side DAPP SM instance (codec context).
  * @param src     Raw indication data received from the E2 agent.
- *
- * @return Decoded indication container ready for consumption by the RIC logic.
+ * @return        Decoded indication container (type DAPP_STATS_V0).
  */
 static sm_ag_if_rd_ind_t on_indication_dapp_sm_ric(sm_ric_t const* sm_ric, sm_ind_data_t const* src)
 {
@@ -96,22 +103,29 @@ static sm_ag_if_rd_ind_t on_indication_dapp_sm_ric(sm_ric_t const* sm_ric, sm_in
   /* Decode E2SM-DAPP indication header and message */
   dst.dapp.ind.hdr = dapp_dec_ind_hdr(&sm->enc, src->len_hdr, src->ind_hdr);
   dst.dapp.ind.msg = dapp_dec_ind_msg(&sm->enc, src->len_msg, src->ind_msg);
-  dst.dapp.act_def = NULL;
   dst.dapp.ric_id = 0;
 
-  /* Decode inner E3 payload (from DAPP IndicationMessage format 0) */
-  assert(dst.dapp.ind.msg.format == FORMAT_0_E2SM_DAPP_IND_MSG);
+  if (dst.dapp.ind.msg.format == FORMAT_1_E2SM_DAPP_IND_MSG) {
+    /* Format 1: decode inner E3 payload from raw bytes */
+    assert(dst.dapp.ind.hdr.format == FORMAT_1_E2SM_DAPP_IND_HDR);
 
-  e2sm_dapp_ind_msg_frmt_0_t* m0 = &dst.dapp.ind.msg.frmt_0;
-  uint32_t ran_function_id = dst.dapp.ind.hdr.frmt_0.ran_function_id;
+    e2sm_dapp_ind_msg_frmt_1_t* m1 = &dst.dapp.ind.msg.frmt_1;
+    uint32_t ran_function_id = dst.dapp.ind.hdr.frmt_1.ran_function_id;
 
-  if (m0->data_size > 0 && m0->data != NULL) {
-    bool ok = dapp_dec_e3_indication(ran_function_id, m0->data, m0->data_size, &dst.dapp.ind.e3);
-    if (!ok) {
-      assert(0 && "Failed to decode inner E3 payload");
+    if (m1->data_size > 0 && m1->data != NULL) {
+      bool ok = dapp_dec_e3_indication(ran_function_id, m1->data, m1->data_size, &dst.dapp.ind.e3);
+      if (!ok) {
+        assert(0 && "Failed to decode inner E3 payload");
+      }
+    } else {
+      dst.dapp.ind.e3.type = DAPP_E3_SM_NONE;
     }
-  } else {
+  } else if (dst.dapp.ind.msg.format == FORMAT_2_E2SM_DAPP_IND_MSG) {
+    /* Format 2: subscription map — no inner E3 payload to decode */
+    assert(dst.dapp.ind.hdr.format == FORMAT_2_E2SM_DAPP_IND_HDR);
     dst.dapp.ind.e3.type = DAPP_E3_SM_NONE;
+  } else {
+    assert(0 != 0 && "Unknown indication message format");
   }
 
   return dst;
@@ -126,11 +140,11 @@ static sm_ag_if_rd_ind_t on_indication_dapp_sm_ric(sm_ric_t const* sm_ric, sm_in
  * High-level behavior:
  *  - Interprets @p ctrl as a dapp_ctrl_req_data_t (E2SM-DAPP control IR).
  *  - If the request carries a non-empty E3 control payload (tmp.e3.type !=
- *    DAPP_E3_SM_NONE) and the E2SM-DAPP ControlMessage (format 0) currently
+ *    DAPP_E3_SM_NONE) and the E2SM-DAPP ControlMessage (format 1) currently
  *    has no inner data (data == NULL, data_size == 0), it:
  *      1) Encodes the E3 control payload into a binary buffer using
  *         dapp_enc_e3_control(), based on the ran_function_id in the header.
- *      2) Injects the encoded E3 buffer into tmp.msg.frmt_0.data / data_size.
+ *      2) Injects the encoded E3 buffer into tmp.msg.frmt_1.data / data_size.
  *      3) Encodes the DAPP ControlHeader and ControlMessage into byte arrays
  *         using dapp_enc_ctrl_hdr() and dapp_enc_ctrl_msg().
  *  - Fills a sm_ctrl_req_data_t structure with:
@@ -156,19 +170,19 @@ static sm_ctrl_req_data_t ric_on_control_req_dapp_sm_ric(sm_ric_t const* sm_ric,
 
   dapp_ctrl_req_data_t tmp = *req;
 
-  if (tmp.e3.type != DAPP_E3_SM_NONE && tmp.msg.format == FORMAT_0_E2SM_DAPP_CTRL_MSG && tmp.msg.frmt_0.data == NULL
-      && tmp.msg.frmt_0.data_size == 0) {
+  if (tmp.e3.type != DAPP_E3_SM_NONE && tmp.msg.format == FORMAT_1_E2SM_DAPP_CTRL_MSG && tmp.msg.frmt_1.data == NULL
+      && tmp.msg.frmt_1.data_size == 0) {
     uint8_t* e3_buf = NULL;
     size_t e3_len = 0;
 
-    bool ok = dapp_enc_e3_control(tmp.hdr.frmt_0.ran_function_id, &tmp.e3, &e3_buf, &e3_len);
+    bool ok = dapp_enc_e3_control(tmp.hdr.frmt_1.ran_function_id, &tmp.e3, &e3_buf, &e3_len);
     if (!ok) {
       fprintf(stderr, "[DAPP][RIC] Failed to encode E3 control payload\n");
       assert(0 && "E3 control encoding failed");
     }
 
-    tmp.msg.frmt_0.data = e3_buf;
-    tmp.msg.frmt_0.data_size = (uint32_t)e3_len;
+    tmp.msg.frmt_1.data = e3_buf;
+    tmp.msg.frmt_1.data_size = (uint32_t)e3_len;
 
     byte_array_t ba_hdr = dapp_enc_ctrl_hdr(&sm->enc, &tmp.hdr);
     dst.ctrl_hdr = ba_hdr.buf;

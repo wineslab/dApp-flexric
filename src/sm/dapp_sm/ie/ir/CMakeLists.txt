@@ -1,16 +1,19 @@
 set (IR_DAPP_SRC
-  e2sm_dapp_act_def_frmt_0.c
-  e2sm_dapp_ctrl_hdr_frmt_0.c
-  e2sm_dapp_ctrl_msg_frmt_0.c
-  e2sm_dapp_ctrl_out_frmt_0.c
-  e2sm_dapp_ev_trg_frmt_0.c
-  e2sm_dapp_ind_hdr_frmt_0.c
-  e2sm_dapp_ind_msg_frmt_0.c
+  dapp_e3_subscription_item.c
+  dapp_e3_subscription_list.c
+  e2sm_dapp_ctrl_hdr_frmt_1.c
+  e2sm_dapp_ctrl_msg_frmt_1.c
+  e2sm_dapp_ctrl_out_frmt_1.c
+  e2sm_dapp_ev_trg_frmt_1.c
+  e2sm_dapp_action_def.c
+  e2sm_dapp_ind_hdr_frmt_1.c
+  e2sm_dapp_ind_hdr_frmt_2.c
+  e2sm_dapp_ind_msg_frmt_1.c
+  e2sm_dapp_ind_msg_frmt_2.c
   ran_func_def_ctrl.c
   ran_func_def_ev_trig.c
   ran_func_def_report.c
   seq_ctrl_style.c
-  seq_ev_trg_style.c
   seq_report_sty.c
   )
 

@@ -1,3 +1,32 @@
+/**
+ * @file xapp_spectrum.c
+ * @brief Demo xApp for the E2SM-DAPP service model.
+ *
+ * This xApp shows how to handle subscription, indications, and controls
+ * for the E2SM-DAPP Service Model over the E2 interface via FlexRIC.
+ *
+ * Subscription behavior is controlled by the report style type:
+ *   - Style 1 (DAPP_STYLE_E3_DATA): receives only E3 data reports.
+ *   - Style 2 (DAPP_STYLE_SUBSCRIPTION_MAP): receives only subscription
+ *     map updates.
+ *
+ * This version creates two independent subscriptions per E2 node:
+ *   - Subscription A: Style 1 (E3 data only)        → sm_cb_dapp_frmt1
+ *   - Subscription B: Style 2 (subscription map only) → sm_cb_dapp_frmt2
+ *
+ * Each subscription receives a distinct ric_req_id, so both the xApp-side
+ * active-procedure registry and the agent-side bimap track them
+ * independently. Deletion is safe: each handle is removed by its own
+ * ric_req_id without affecting the other.
+ *
+ * Indication callbacks:
+ *   - sm_cb_dapp_frmt1: handles Format 1 (E3 data, e.g. spectrum PRBs)
+ *   - sm_cb_dapp_frmt2: handles Format 2 (dApp E3 subscription map)
+ *
+ * Control: predefined spectrum control variants can be sent periodically
+ * to all E2 nodes.
+ */
+
 #include "../../../../src/util/alg_ds/ds/lock_guard/lock_guard.h"
 #include "../../../../src/xApp/e42_xapp_api.h"
 #include "../../../../src/util/time_now_us.h"
@@ -12,21 +41,41 @@
 #include <signal.h>
 #include <pthread.h>
 
+/** @brief DAPP SM identifier (RAN Function ID 255). */
 int const DAPP_SM_ID = 255;
 
+/** @brief E3 RAN function IDs used by inner service models. */
 enum {
-  RAN_FUNC_ID_SPECTRUM = 1,
+  E3_RAN_FUNC_ID_SPECTRUM = 1,
 };
 
-/* Global termination flag, set by signal handler */
+/**
+ * @brief E2SM-DAPP report style types.
+ *
+ * These correspond to the styles advertised in the RAN Function Definition:
+ *   - Style 1: E3 data reports only (indication format 1)
+ *   - Style 2: E3 subscription map only (indication format 2)
+ */
+enum {
+  DAPP_STYLE_E3_DATA = 1,
+  DAPP_STYLE_SUBSCRIPTION_MAP = 2,
+};
+
+/** @brief Global termination flag, set by the signal handler thread. */
 static volatile sig_atomic_t g_terminate = 0;
 
+/**
+ * @brief Dedicated thread that waits for SIGINT or SIGTERM.
+ *
+ * Uses sigwait() on a pre-blocked signal set so that the main thread
+ * and all other threads are not interrupted. Sets g_terminate = 1
+ * when a signal is received.
+ */
 static void* signal_thread(void* arg)
 {
   sigset_t* set = (sigset_t*)arg;
   int sig;
 
-  // Wait for SIGINT or SIGTERM
   if (sigwait(set, &sig) == 0) {
     g_terminate = 1;
   }
@@ -37,59 +86,94 @@ static void* signal_thread(void* arg)
 /* Predefined control message variants                                 */
 /* ------------------------------------------------------------------ */
 
+/** @brief A list of PRB indices to be blocked. */
 typedef struct {
-  size_t      count;
-  uint16_t    prbs[273];
+  size_t count;
+  uint16_t prbs[273];
 } prb_list_t;
 
+/**
+ * @brief Predefined spectrum control variants for testing.
+ */
 static const prb_list_t ctrl_variants[] = {
-  /* 0 – block edges */
-  { .count = 4, .prbs = { 0, 1, 271, 272 } },
-  /* 1 – block centre cluster */
-  { .count = 5, .prbs = { 130, 131, 132, 133, 134 } },
-  /* 2 – block even-numbered low PRBs */
-  { .count = 6, .prbs = { 0, 2, 4, 6, 8, 10 } },
-  /* 3 – block a few scattered PRBs */
-  { .count = 3, .prbs = { 50, 150, 250 } },
-  /* 4 – clear everything (empty blacklist) */
-  { .count = 0, .prbs = { 0 } },
+    {.count = 4, .prbs = {75, 80, 85, 90}},
+    {.count = 5, .prbs = {100, 101, 102, 103, 104, 105}},
+    {.count = 6, .prbs = {75, 76, 77, 103, 104, 105}},
+    {.count = 3, .prbs = {80, 90, 100}},
+    {.count = 0, .prbs = {0}},
 };
 
 #define NUM_VARIANTS (sizeof(ctrl_variants) / sizeof(ctrl_variants[0]))
 
 /**
- * @brief Indication callback for the DAPP service model.
+ * @brief Print E2 node identity fields common to both header formats.
  *
- * This function is registered as the report callback for the DAPP SM.
- * It:
- *  - Verifies that the received message is a DAPP indication in format 0.
- *  - Retrieves the indication header, message, and E3 payload.
- *  - Prints a summary of the payload depending on the E3 SM type:
- *      * DAPP_E3_SM_SPECTRUM: prints the list of (up to 15) PRBs.
- *  - Logs an error message if the payload type is unexpected.
+ * @param node_type     ngran_node_t cast to uint8_t.
+ * @param plmn_id       3-byte packed PLMN identity.
+ * @param node_nb_id    gNB / eNB numeric identity.
+ * @param cu_du_present Whether the CU-DU ID is valid.
+ * @param cu_du_id      CU-DU ID (only valid when cu_du_present is true).
  */
-static void sm_cb_dapp(sm_ag_if_rd_t const* rd)
+static void print_node_identity(uint8_t node_type,
+                                const uint8_t plmn_id[3],
+                                uint32_t node_nb_id,
+                                bool cu_du_present,
+                                uint64_t cu_du_id)
+{
+  printf("[DAPP][SM_CB]   node_type=%u, plmn_id=%02x%02x%02x, node_nb_id=%u\n",
+         node_type,
+         plmn_id[0],
+         plmn_id[1],
+         plmn_id[2],
+         node_nb_id);
+  if (cu_du_present) {
+    printf("[DAPP][SM_CB]   node_cu_du_id=%lu\n", (unsigned long)cu_du_id);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Callback: Format 1 — E3 data reports                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * @brief Indication callback for Format 1 (E3 data report) indications.
+ *
+ * Expects indication header format 1 (ran_function_id, dapp_id, node
+ * identity) and indication message format 1 (raw E3 data payload).
+ * Dispatches on the E3 SM type to decode and print the inner payload.
+ *
+ * Currently supports:
+ *   - DAPP_E3_SM_SPECTRUM: prints the list of PRBs.
+ */
+static void sm_cb_dapp_frmt1(sm_ag_if_rd_t const* rd)
 {
   assert(rd != NULL);
   assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
-  assert(rd->ind.dapp.ind.msg.format == FORMAT_0_E2SM_DAPP_IND_MSG);
 
-  const e2sm_dapp_ind_hdr_frmt_0_t* hdr = &rd->ind.dapp.ind.hdr.frmt_0;
-  const e2sm_dapp_ind_msg_frmt_0_t* msg = &rd->ind.dapp.ind.msg.frmt_0;
+  const e2sm_dapp_ind_hdr_t* hdr = &rd->ind.dapp.ind.hdr;
+  const e2sm_dapp_ind_msg_t* msg = &rd->ind.dapp.ind.msg;
   const dapp_e3_ind_payload_t* e3 = &rd->ind.dapp.ind.e3;
 
-  if (msg->data == NULL || msg->data_size == 0) {
-    printf("[DAPP][SM_CB] Payload: <empty>\n");
+  assert(hdr->format == FORMAT_1_E2SM_DAPP_IND_HDR);
+  assert(msg->format == FORMAT_1_E2SM_DAPP_IND_MSG);
+
+  const e2sm_dapp_ind_hdr_frmt_1_t* h1 = &hdr->frmt_1;
+  printf("[DAPP][FMT1] Indication: ran_function_id=%u, dapp_id=%u\n", h1->ran_function_id, h1->dapp_id);
+  print_node_identity(h1->node_type, h1->node_plmn_id, h1->node_nb_id, h1->node_cu_du_id_present, h1->node_cu_du_id);
+
+  const e2sm_dapp_ind_msg_frmt_1_t* m1 = &msg->frmt_1;
+
+  if (m1->data == NULL || m1->data_size == 0) {
+    printf("[DAPP][FMT1] Payload: <empty>\n");
     return;
   }
 
-  if(e3->type == DAPP_E3_SM_SPECTRUM){
+  printf("[DAPP][FMT1]   data_size=%u\n", (unsigned)m1->data_size);
+
+  if (e3->type == DAPP_E3_SM_SPECTRUM) {
     const spectrum_sm_report_t* rep = &e3->u.spectrum;
-
-    printf("[DAPP][SM_CB] Indication: ran_function_id=%u, data_size=%u\n", hdr->ran_function_id, (unsigned)msg->data_size);
-    printf("[DAPP][SM_CB] Spectrum E3 payload: prb_count=%ld\n", rep->prb_count);
-
-    printf("[DAPP][SM_CB] %ld PRBs:", rep->prb_count);
+    printf("[DAPP][FMT1] Spectrum E3 payload: prb_count=%ld\n", rep->prb_count);
+    printf("[DAPP][FMT1] %ld PRBs:", rep->prb_count);
     for (long i = 0; i < rep->prb_count; ++i) {
       printf(" %u", rep->prbs[i]);
     }
@@ -97,17 +181,71 @@ static void sm_cb_dapp(sm_ag_if_rd_t const* rd)
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Callback: Format 2 — dApp E3 subscription map                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * @brief Indication callback for Format 2 (subscription map) indications.
+ *
+ * Expects indication header format 2 (node identity only) and indication
+ * message format 2 (dApp E3 subscription list).
+ *
+ * Prints the current subscription map: which dApps are connected and
+ * which E3 RAN functions each is subscribed to. If no dApps are
+ * registered, prints an explicit "no dApps" message.
+ */
+static void sm_cb_dapp_frmt2(sm_ag_if_rd_t const* rd)
+{
+  assert(rd != NULL);
+  assert(rd->type == INDICATION_MSG_AGENT_IF_ANS_V0);
+
+  const e2sm_dapp_ind_hdr_t* hdr = &rd->ind.dapp.ind.hdr;
+  const e2sm_dapp_ind_msg_t* msg = &rd->ind.dapp.ind.msg;
+
+  assert(hdr->format == FORMAT_2_E2SM_DAPP_IND_HDR);
+  assert(msg->format == FORMAT_2_E2SM_DAPP_IND_MSG);
+
+  const e2sm_dapp_ind_hdr_frmt_2_t* h2 = &hdr->frmt_2;
+  printf("[DAPP][FMT2] Indication (subscription map):\n");
+  print_node_identity(h2->node_type, h2->node_plmn_id, h2->node_nb_id, h2->node_cu_du_id_present, h2->node_cu_du_id);
+
+  const e2sm_dapp_ind_msg_frmt_2_t* m2 = &msg->frmt_2;
+  const dapp_e3_subscription_list_t* subs = &m2->dapp_e3_subs;
+
+  if (subs->sz_dapp_e3_subscriptions == 0 || subs->dapp_e3_subscriptions == NULL) {
+    printf("[DAPP][FMT2] No dApps currently registered on this E2 node\n");
+    return;
+  }
+
+  printf("[DAPP][FMT2] dApp E3 subscriptions: %zu dApp(s)\n", subs->sz_dapp_e3_subscriptions);
+
+  for (size_t i = 0; i < subs->sz_dapp_e3_subscriptions; ++i) {
+    const dapp_e3_subscription_item_t* item = &subs->dapp_e3_subscriptions[i];
+    printf("[DAPP][FMT2]   dapp_id=%u, e3_ran_functions(%zu):", item->dapp_id, item->sz_subscribed_e3_ran_functions);
+    for (size_t j = 0; j < item->sz_subscribed_e3_ran_functions; ++j) {
+      printf(" %u", item->subscribed_e3_ran_functions[j]);
+    }
+    printf("\n");
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Control helpers                                                     */
+/* ------------------------------------------------------------------ */
+
 /**
  * @brief Send a DAPP control message to all connected E2 nodes.
  *
- * This helper:
- *  - Builds a dapp_ctrl_req_data_t with:
- *      * Control header: RAN function ID and dApp ID.
- *      * Empty control message body (E2SM DAPP format 0).
- *      * E3 payload passed by the caller.
- *  - Uses control_sm_xapp_api() to send the control request to each E2 node.
- *  - Asserts that every control operation succeeds.
- *  - Frees any memory dynamically owned by ctrl via free_dapp_ctrl_req_data().
+ * Builds a dapp_ctrl_req_data_t with the given RAN function ID, dApp ID,
+ * and E3 control payload, then sends it to each E2 node via
+ * control_sm_xapp_api().
+ *
+ * @param nodes             Connected E2 nodes.
+ * @param SM_ID             SM identifier (DAPP_SM_ID).
+ * @param ran_function_id   Target E3 RAN function ID.
+ * @param dapp_id           Target dApp ID.
+ * @param e3_payload        E3 control payload to forward.
  */
 static void send_control_message(e2_node_arr_xapp_t nodes,
                                  int SM_ID,
@@ -117,13 +255,13 @@ static void send_control_message(e2_node_arr_xapp_t nodes,
 {
   dapp_ctrl_req_data_t ctrl = (dapp_ctrl_req_data_t){0};
 
-  ctrl.hdr.format = FORMAT_0_E2SM_DAPP_CTRL_HDR;
-  ctrl.hdr.frmt_0.ran_function_id = ran_function_id;
-  ctrl.hdr.frmt_0.dapp_id = dapp_id;
+  ctrl.hdr.format = FORMAT_1_E2SM_DAPP_CTRL_HDR;
+  ctrl.hdr.frmt_1.ran_function_id = ran_function_id;
+  ctrl.hdr.frmt_1.dapp_id = dapp_id;
 
-  ctrl.msg.format = FORMAT_0_E2SM_DAPP_CTRL_MSG;
-  ctrl.msg.frmt_0.data = NULL;
-  ctrl.msg.frmt_0.data_size = 0;
+  ctrl.msg.format = FORMAT_1_E2SM_DAPP_CTRL_MSG;
+  ctrl.msg.frmt_1.data = NULL;
+  ctrl.msg.frmt_1.data_size = 0;
 
   ctrl.e3 = *e3_payload;
 
@@ -138,15 +276,14 @@ static void send_control_message(e2_node_arr_xapp_t nodes,
 /**
  * @brief Build and send a test Spectrum SM control message.
  *
- * This function:
- *  - Allocates and fills a spectrum_sm_control_t with a small list of PRBs
- *    that should NOT be blocked by the gNB (whitelist).
- *  - Wraps this in a dapp_e3_ctrl_payload_t of type DAPP_E3_SM_SPECTRUM.
- *  - Sends the control to all E2 nodes using the generic send_control_message()
- *    helper with the Spectrum RAN function ID.
+ * Selects a predefined PRB blacklist variant (cycling through
+ * ctrl_variants[]) and sends it to all E2 nodes as a spectrum
+ * control payload.
+ *
+ * @param nodes        Connected E2 nodes.
+ * @param variant_idx  Index into ctrl_variants (wraps with modulo).
  */
-static void generate_control_message_spectrum(e2_node_arr_xapp_t nodes,
-                                              unsigned variant_idx)
+static void generate_control_message_spectrum(e2_node_arr_xapp_t nodes, unsigned variant_idx)
 {
   const prb_list_t* v = &ctrl_variants[variant_idx % NUM_VARIANTS];
 
@@ -162,8 +299,7 @@ static void generate_control_message_spectrum(e2_node_arr_xapp_t nodes,
     ctrl.blockedPRBs = NULL;
   }
 
-  printf("[DAPP RC]: Sending control variant %u — %ld blocked PRBs:",
-         variant_idx % (unsigned)NUM_VARIANTS, ctrl.prb_count);
+  printf("[DAPP RC]: Sending control variant %u — %ld blocked PRBs:", variant_idx % (unsigned)NUM_VARIANTS, ctrl.prb_count);
   for (long i = 0; i < ctrl.prb_count; ++i)
     printf(" %u", ctrl.blockedPRBs[i]);
   printf("\n");
@@ -172,50 +308,54 @@ static void generate_control_message_spectrum(e2_node_arr_xapp_t nodes,
   payload.type = DAPP_E3_SM_SPECTRUM;
   payload.u.spectrum = ctrl;
 
-  send_control_message(nodes, DAPP_SM_ID, RAN_FUNC_ID_SPECTRUM, /*dapp_id=*/1, &payload);
+  send_control_message(nodes, DAPP_SM_ID, E3_RAN_FUNC_ID_SPECTRUM, /*dapp_id=*/1, &payload);
 }
 
+/* ------------------------------------------------------------------ */
+/* Subscription generation                                             */
+/* ------------------------------------------------------------------ */
+
 /**
- * @brief Generate a minimal DAPP subscription structure.
+ * @brief Generate a DAPP subscription with the given report style.
  *
- * Given a DAPP RAN function definition, this:
- *  - Initializes an event trigger in format 0 with default values
- *    (no specific filtering is set here).
- *  - Allocates a single action definition in format 0, style type 1.
- *  - Returns a dapp_sub_data_t ready to be passed to report_sm_xapp_api().
+ * Builds a dapp_sub_data_t containing:
+ *   - Event trigger: Format 1 (common to all styles)
+ *   - Action definition: Format 1 with the requested ric_style_type
  *
- * The caller is responsible for freeing it with free_dapp_sub_data().
+ * The style type determines what indications the agent will send:
+ *   1 = E3 data only
+ *   2 = subscription map only
+ *
+ * @param ran_func    The RAN function definition.
+ * @param style_type  Report style type (1 or 2).
+ * @return            Populated subscription data (caller must free via
+ *                    free_dapp_sub_data()).
  */
-static dapp_sub_data_t gen_dapp_subs(e2sm_dapp_func_def_t const* ran_func)
+static dapp_sub_data_t gen_dapp_subs(e2sm_dapp_func_def_t const* ran_func, uint32_t style_type)
 {
   assert(ran_func != NULL);
-  dapp_sub_data_t dapp_sub = (dapp_sub_data_t){0};
+  dapp_sub_data_t dapp_sub = {0};
 
-  dapp_sub.et.format = FORMAT_0_E2SM_DAPP_EV_TRIGGER_FORMAT;
-  dapp_sub.et.frmt_0 = (e2sm_dapp_ev_trg_frmt_0_t){};
+  dapp_sub.et.format = FORMAT_1_E2SM_DAPP_EV_TRIGGER_FORMAT;
+  dapp_sub.et.frmt_1 = (e2sm_dapp_ev_trg_frmt_1_t){};
 
-  dapp_sub.sz_ad = 1;
-  dapp_sub.ad = calloc(1, sizeof(e2sm_dapp_action_def_t));
-  assert(dapp_sub.ad != NULL);
-
-  dapp_sub.ad[0].ric_style_type = 1;
-  dapp_sub.ad[0].format = FORMAT_0_E2SM_DAPP_ACT_DEF;
-
-  dapp_sub.ad[0].frmt_0 = (e2sm_dapp_act_def_frmt_0_t){};
+  dapp_sub.action_def = calloc(1, sizeof(e2sm_dapp_action_def_t));
+  assert(dapp_sub.action_def != NULL);
+  dapp_sub.action_def->format = FORMAT_1_E2SM_DAPP_ACTION_DEF;
+  dapp_sub.action_def->ric_style_type = style_type;
+  dapp_sub.action_def->frmt_1 = (e2sm_dapp_action_def_frmt_1_t){};
 
   return dapp_sub;
 }
 
 /**
- * @brief Find the index of a RAN function in an array by predicate.
+ * @brief Find the index of a RAN function by SM ID in a RAN function array.
  *
- * This generic helper:
- *  - Iterates over an array of sm_ran_function_t objects.
- *  - Applies the predicate f(elem, id) to each element.
- *  - Returns the index of the first element for which f() is true.
- *  - Asserts (and aborts) if no match is found.
- *
- * In this file, it is used to locate the DAPP SM by its SM ID.
+ * @param rf  Array of RAN functions.
+ * @param sz  Size of the array.
+ * @param f   Predicate function: returns true if the element matches.
+ * @param id  The SM ID to search for.
+ * @return    Index of the matching element. Asserts if not found.
  */
 static size_t find_sm_idx(sm_ran_function_t* rf, size_t sz, bool (*f)(sm_ran_function_t const*, int const), int const id)
 {
@@ -228,10 +368,7 @@ static size_t find_sm_idx(sm_ran_function_t* rf, size_t sz, bool (*f)(sm_ran_fun
 }
 
 /**
- * @brief Predicate that checks whether a RAN function has a given SM ID.
- *
- * Returns true if elem->id == id, false otherwise.
- * Used together with find_sm_idx() to locate the DAPP SM in the RF list.
+ * @brief Predicate: returns true if elem->id matches the given SM ID.
  */
 static bool eq_sm(sm_ran_function_t const* elem, int const id)
 {
@@ -242,18 +379,41 @@ static bool eq_sm(sm_ran_function_t const* elem, int const id)
 }
 
 /**
- * @brief Print human-readable information about a DAPP RAN function.
+ * @brief Print dApp E3 subscription list with configurable indentation.
  *
- * Given an E2 node and an index into its RAN function list, this:
- *  - Checks that the entry is a DAPP RAN function.
- *  - Prints:
- *      * SM ID
- *      * Name, description, and OID (if present)
- *      * Whether an event trigger is present
- *      * All configured report styles (if any)
- *      * All configured control styles (if any)
+ * Prints which dApps are subscribed and which E3 RAN functions each
+ * is registered for. If the list is NULL or empty, prints "none".
  *
- * This is mainly for debugging/inspection of the DAPP function definition.
+ * @param subs    Pointer to the subscription list (may be NULL).
+ * @param indent  Prefix string for each output line (e.g. "      ").
+ */
+static void print_dapp_e3_subs(const dapp_e3_subscription_list_t* subs, const char* indent)
+{
+  if (subs == NULL || subs->sz_dapp_e3_subscriptions == 0 || subs->dapp_e3_subscriptions == NULL) {
+    printf("%sdApp E3 subscriptions: none\n", indent);
+    return;
+  }
+
+  printf("%sdApp E3 subscriptions (%zu):\n", indent, subs->sz_dapp_e3_subscriptions);
+  for (size_t i = 0; i < subs->sz_dapp_e3_subscriptions; ++i) {
+    const dapp_e3_subscription_item_t* sub = &subs->dapp_e3_subscriptions[i];
+    printf("%s  - dApp %u: subscribed to %zu E3 RAN function(s):", indent, sub->dapp_id, sub->sz_subscribed_e3_ran_functions);
+    for (size_t j = 0; j < sub->sz_subscribed_e3_ran_functions; ++j) {
+      printf(" %u", sub->subscribed_e3_ran_functions[j]);
+    }
+    printf("\n");
+  }
+}
+
+/**
+ * @brief Print detailed information about a DAPP RAN function definition.
+ *
+ * Displays SM ID, name, description, OID, event trigger presence,
+ * all report styles (with per-style dApp E3 subscriptions), and
+ * all control styles (with per-style dApp E3 subscriptions).
+ *
+ * @param idx  Index of the RAN function in the node's RF array.
+ * @param n    The E2 node whose RAN function to print.
  */
 static void print_dapp_sm_info(size_t idx, e2_node_connected_xapp_t const* n)
 {
@@ -295,14 +455,14 @@ static void print_dapp_sm_info(size_t idx, e2_node_connected_xapp_t const* n)
 
       printf(
           "    - report_type=%u, name=%.*s, "
-          "ev_trig_type=%u, act_frmt_type=%u, ind_hdr_type=%u, ind_msg_type=%u\n",
+          "ind_hdr_type=%u, ind_msg_type=%u\n",
           s->report_type,
           (int)s->name.len,
           (const char*)s->name.buf,
-          s->ev_trig_type,
-          s->act_frmt_type,
           s->ind_hdr_type,
           s->ind_msg_type);
+
+      print_dapp_e3_subs(s->dapp_e3_subs, "      ");
     }
   } else {
     printf("  Report styles: none\n");
@@ -323,27 +483,35 @@ static void print_dapp_sm_info(size_t idx, e2_node_connected_xapp_t const* n)
           s->hdr,
           s->msg,
           s->out_frmt);
+
+      print_dapp_e3_subs(s->dapp_e3_subs, "      ");
     }
   } else {
     printf("  Control styles: none\n");
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Subscription management                                             */
+/* ------------------------------------------------------------------ */
+
 /**
  * @brief Subscribe to the DAPP SM on all connected E2 nodes.
  *
- * For each node:
- *  - Finds the DAPP SM in the RAN function list using find_sm_idx()/eq_sm().
- *  - Verifies that the RAN function is of DAPP type.
- *  - Prints debug information about the RAN function.
- *  - Builds a minimal subscription (event trigger + action definition).
- *  - Calls report_sm_xapp_api() to install the report subscription
- *    and registers sm_cb_dapp as the indication callback.
- *  - Stores the subscription handle in hndl[i].
+ * For each E2 node:
+ *   - Locates the DAPP RAN function in the node's RF list.
+ *   - Prints the RAN function definition for debugging.
+ *   - Builds a subscription with the requested report style.
+ *   - Installs the subscription via report_sm_xapp_api().
+ *   - Stores the subscription handle in hndl[i].
  *
- * The caller must later remove these subscriptions with delete_subscriptions().
+ * @param nodes       Connected E2 nodes.
+ * @param hndl        Output array for subscription handles (one per node).
+ * @param style_type  Report style (1 = E3 data, 2 = sub map).
+ * @param cb          Indication callback function.
+ * @param label       Human-readable label for log messages.
  */
-static void subscribe_sm(e2_node_arr_xapp_t nodes, sm_ans_xapp_t* hndl)
+static void subscribe_sm(e2_node_arr_xapp_t nodes, sm_ans_xapp_t* hndl, uint32_t style_type, sm_cb cb, const char* label)
 {
   for (size_t i = 0; i < nodes.len; ++i) {
     e2_node_connected_xapp_t* n = &nodes.n[i];
@@ -354,9 +522,10 @@ static void subscribe_sm(e2_node_arr_xapp_t nodes, sm_ans_xapp_t* hndl)
     if (n->rf[idx].defn.dapp.name.name.buf != NULL) {
       print_dapp_sm_info(idx, n);
 
-      dapp_sub_data_t dapp_sub = gen_dapp_subs(&n->rf[idx].defn.dapp);
+      dapp_sub_data_t dapp_sub = gen_dapp_subs(&n->rf[idx].defn.dapp, style_type);
 
-      hndl[i] = report_sm_xapp_api(&n->id, DAPP_SM_ID, &dapp_sub, sm_cb_dapp);
+      printf("[DAPP RC]: Installing %s (style %u) subscription on E2 node %zu\n", label, style_type, i);
+      hndl[i] = report_sm_xapp_api(&n->id, DAPP_SM_ID, &dapp_sub, cb);
       assert(hndl[i].success == true);
 
       free_dapp_sub_data(&dapp_sub);
@@ -367,35 +536,37 @@ static void subscribe_sm(e2_node_arr_xapp_t nodes, sm_ans_xapp_t* hndl)
 /**
  * @brief Remove DAPP SM subscriptions from all E2 nodes.
  *
- * This function:
- *  - Iterates over the array of subscription answers.
- *  - For each successful subscription, calls rm_report_sm_xapp_api()
- *    with the stored handle to remove the subscription from the RIC.
+ * Iterates over the handle array and calls rm_report_sm_xapp_api()
+ * for each successful subscription.
+ *
+ * @param hndl   Array of subscription handles.
+ * @param nodes  Connected E2 nodes (used for array length).
  */
 static void delete_subscriptions(sm_ans_xapp_t* hndl, e2_node_arr_xapp_t nodes)
 {
   for (int i = 0; i < nodes.len; ++i) {
     if (hndl[i].success == true) {
       rm_report_sm_xapp_api(hndl[i].u.handle);
+    }
   }
 }
-}
+
+/* ------------------------------------------------------------------ */
+/* main                                                                */
+/* ------------------------------------------------------------------ */
 
 /**
- * @brief Entry point for the DAPP “RC” xApp demo.
+ * @brief Entry point for the DAPP xApp.
  *
- * High-level behavior:
- *  - Parses command-line arguments and initializes the xApp API.
- *  - Retrieves the list of connected E2 nodes.
- *  - Subscribes to the DAPP SM on each node, registering sm_cb_dapp().
- *  - Sends one Spectrum control message to all nodes.
- *  - Sleeps for 600 seconds, during which indications are received and
- *    handled by sm_cb_dapp() in the background.
- *  - Cleans up:
- *      * Removes subscriptions.
- *      * Stops the xApp API loop.
- *      * Frees node and handle resources.
- *  - Prints a final success message before exiting.
+ * Workflow:
+ *   1. Parse command-line args and initialize the xApp API.
+ *   2. Set up a dedicated signal-handling thread for clean shutdown.
+ *   3. Retrieve connected E2 nodes.
+ *   4. Subscribe to the DAPP SM twice (E3 data + subscription map).
+ *   5. Enter a periodic loop (indications are handled asynchronously
+ *      by the registered callbacks).
+ *   6. On SIGINT/SIGTERM or timeout: unsubscribe both, stop the API,
+ *      and exit.
  */
 int main(int argc, char* argv[])
 {
@@ -409,7 +580,6 @@ int main(int argc, char* argv[])
   int rc = pthread_sigmask(SIG_BLOCK, &set, NULL);
   assert(rc == 0);
 
-  // 2) Start the signal-handling thread
   pthread_t sig_thr;
   rc = pthread_create(&sig_thr, NULL, signal_thread, &set);
   assert(rc == 0);
@@ -422,12 +592,32 @@ int main(int argc, char* argv[])
 
   printf("[DAPP RC]: Connected E2 nodes = %d\n", nodes.len);
 
-  sm_ans_xapp_t* hndl = calloc(nodes.len, sizeof(sm_ans_xapp_t));
-  assert(hndl != NULL);
+  /* Allocate two independent handle arrays — one per subscription */
+  sm_ans_xapp_t* hndl_e3_data = calloc(nodes.len, sizeof(sm_ans_xapp_t));
+  assert(hndl_e3_data != NULL);
 
-  subscribe_sm(nodes, hndl);
+  sm_ans_xapp_t* hndl_sub_map = calloc(nodes.len, sizeof(sm_ans_xapp_t));
+  assert(hndl_sub_map != NULL);
 
-  /* ---- Periodic control loop: send a different variant every 5 s ---- */
+  /*
+   * Two subscriptions per E2 node, each with its own ric_req_id:
+   *
+   *   Subscription A — Style 1 (E3 data only):
+   *     Receives Format 1 indications (E3 data reports).
+   *     Callback: sm_cb_dapp_frmt1
+   *
+   *   Subscription B — Style 2 (subscription map only):
+   *     Receives Format 2 indications (dApp E3 subscription map).
+   *     Callback: sm_cb_dapp_frmt2
+   *
+   * Both subscriptions target the same ran_func_id (DAPP_SM_ID = 255)
+   * but receive distinct ric_req_ids, so the xApp active-procedure
+   * registry and the agent bimap track them independently.
+   */
+  subscribe_sm(nodes, hndl_e3_data, DAPP_STYLE_E3_DATA, sm_cb_dapp_frmt1, "DAPP (E3 data)");
+  subscribe_sm(nodes, hndl_sub_map, DAPP_STYLE_SUBSCRIPTION_MAP, sm_cb_dapp_frmt2, "DAPP (subscription map)");
+
+  /* ---- Periodic loop  ---- */
   const unsigned ctrl_period_sec = 5;
   const unsigned max_runtime_sec = 600;
   unsigned elapsed = 0;
@@ -437,7 +627,6 @@ int main(int argc, char* argv[])
     generate_control_message_spectrum(nodes, variant);
     variant++;
 
-    /* Sleep for ctrl_period_sec, but check g_terminate every second */
     for (unsigned s = 0; s < ctrl_period_sec && !g_terminate; ++s) {
       sleep(1);
       ++elapsed;
@@ -450,9 +639,13 @@ int main(int argc, char* argv[])
     printf("[DAPP RC]: Max runtime reached, shutting down...\n");
   }
 
-  /* Clean up: unsubscribe, free memory, stop xApp API */
-  delete_subscriptions(hndl, nodes);
-  free(hndl);
+  /* Delete both subscriptions independently */
+
+  delete_subscriptions(hndl_e3_data, nodes);
+  delete_subscriptions(hndl_sub_map, nodes);
+
+  free(hndl_e3_data);
+  free(hndl_sub_map);
 
   sleep(1);
 

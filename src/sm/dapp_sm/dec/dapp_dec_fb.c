@@ -10,11 +10,11 @@ e2sm_dapp_event_trigger_t dapp_dec_event_trigger_fb(size_t len, uint8_t const ev
   return avoid_warning;
 }
 
-dapp_action_def_t dapp_dec_action_def_fb(size_t len, uint8_t const action_def[len])
+e2sm_dapp_action_def_t dapp_dec_action_def_fb(size_t len, uint8_t const buf[len])
 {
   assert(0 != 0 && "Not implemented");
-  assert(action_def != NULL);
-  dapp_action_def_t avoid_warning;
+  assert(buf != NULL);
+  e2sm_dapp_action_def_t avoid_warning;
   return avoid_warning;
 }
 

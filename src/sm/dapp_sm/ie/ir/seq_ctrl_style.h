@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "../../../../util/byte_array.h"
+#include "dapp_e3_subscription_list.h"
 
 typedef struct {
   uint32_t style_type;
@@ -11,6 +12,7 @@ typedef struct {
   uint32_t hdr;
   uint32_t msg;
   uint32_t out_frmt;
+  dapp_e3_subscription_list_t* dapp_e3_subs;
 } seq_ctrl_style_dapp_sm_t;
 
 void free_seq_ctrl_style_dapp_sm(seq_ctrl_style_dapp_sm_t* src);

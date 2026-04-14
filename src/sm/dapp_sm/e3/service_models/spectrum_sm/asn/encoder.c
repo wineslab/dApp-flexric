@@ -34,7 +34,7 @@ bool spectrum_sm_enc_control(const spectrum_sm_control_t* ctrl, uint8_t** out_bu
       return false;
     }
 
-    PRB_Index_t *elem = (PRB_Index_t*)calloc(1, sizeof(*elem));
+    PRB_Index_t* elem = (PRB_Index_t*)calloc(1, sizeof(*elem));
     assert(elem != NULL && "Memory exhausted in spectrum_sm_enc_control");
 
     *elem = (PRB_Index_t)v;

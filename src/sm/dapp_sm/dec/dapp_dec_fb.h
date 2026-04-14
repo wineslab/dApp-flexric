@@ -11,7 +11,7 @@ typedef struct {
 
 e2sm_dapp_event_trigger_t dapp_dec_event_trigger_fb(size_t len, uint8_t const ev_tr[len]);
 
-e2sm_dapp_action_def_t dapp_dec_action_def_fb(size_t len, uint8_t const action_def[len]);
+e2sm_dapp_action_def_t dapp_dec_action_def_fb(size_t len, uint8_t const buf[len]);
 
 e2sm_dapp_ind_hdr_t dapp_dec_ind_hdr_fb(size_t len, uint8_t const ind_hdr[len]);
 

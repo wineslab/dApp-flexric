@@ -32,6 +32,9 @@
  *
  * @return true if encoding succeeds, false otherwise.
  */
-__attribute__((visibility("default"))) bool dapp_enc_e3_control(uint32_t ran_function_id, const dapp_e3_ctrl_payload_t* payload, uint8_t** out_buf, size_t* out_size);
+__attribute__((visibility("default"))) bool dapp_enc_e3_control(uint32_t ran_function_id,
+                                                                const dapp_e3_ctrl_payload_t* payload,
+                                                                uint8_t** out_buf,
+                                                                size_t* out_size);
 
 #endif

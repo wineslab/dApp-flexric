@@ -12,8 +12,8 @@ void free_e2sm_dapp_event_trigger(e2sm_dapp_event_trigger_t* src)
 {
   assert(src != NULL);
 
-  if (src->format == FORMAT_0_E2SM_DAPP_EV_TRIGGER_FORMAT) {
-    free_e2sm_dapp_ev_trg_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_EV_TRIGGER_FORMAT) {
+    free_e2sm_dapp_ev_trg_frmt_1(&src->frmt_1);
 
   } else {
     assert(0 != 0 && "Not implemented");
@@ -28,8 +28,8 @@ bool eq_e2sm_dapp_event_trigger(e2sm_dapp_event_trigger_t const* m0, e2sm_dapp_e
   if (m0 == NULL || m1 == NULL)
     return false;
 
-  if (m0->format == FORMAT_0_E2SM_DAPP_EV_TRIGGER_FORMAT) {
-    return eq_e2sm_dapp_ev_trg_frmt_0(&m0->frmt_0, &m1->frmt_0);
+  if (m0->format == FORMAT_1_E2SM_DAPP_EV_TRIGGER_FORMAT) {
+    return eq_e2sm_dapp_ev_trg_frmt_1(&m0->frmt_1, &m1->frmt_1);
 
   } else {
     assert(0 != 0 && "Not implemented");
@@ -46,8 +46,8 @@ e2sm_dapp_event_trigger_t cp_e2sm_dapp_event_trigger(e2sm_dapp_event_trigger_t c
   e2sm_dapp_event_trigger_t dst = {0};
   dst.format = src->format;
 
-  if (src->format == FORMAT_0_E2SM_DAPP_EV_TRIGGER_FORMAT) {
-    dst.frmt_0 = cp_e2sm_dapp_ev_trg_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_EV_TRIGGER_FORMAT) {
+    dst.frmt_1 = cp_e2sm_dapp_ev_trg_frmt_1(&src->frmt_1);
 
   } else {
     assert(0 != 0 && "Not implemented");
@@ -64,11 +64,10 @@ void free_e2sm_dapp_action_def(e2sm_dapp_action_def_t* src)
 {
   assert(src != NULL);
 
-  if (src->format == FORMAT_0_E2SM_DAPP_ACT_DEF) {
-    free_e2sm_dapp_act_def_frmt_0(&src->frmt_0);
-
+  if (src->format == FORMAT_1_E2SM_DAPP_ACTION_DEF) {
+    free_e2sm_dapp_action_def_frmt_1(&src->frmt_1);
   } else {
-    assert("Unknown format");
+    assert(0 != 0 && "Unknown format");
   }
 }
 
@@ -77,13 +76,11 @@ e2sm_dapp_action_def_t cp_e2sm_dapp_action_def(e2sm_dapp_action_def_t const* src
   assert(src != NULL);
 
   e2sm_dapp_action_def_t dst = {0};
-
+  dst.format = src->format;
   dst.ric_style_type = src->ric_style_type;
 
-  dst.format = src->format;
-  if (dst.format == FORMAT_0_E2SM_DAPP_ACT_DEF) {
-    dst.frmt_0 = cp_e2sm_dapp_act_def_frmt_0(&src->frmt_0);
-
+  if (src->format == FORMAT_1_E2SM_DAPP_ACTION_DEF) {
+    dst.frmt_1 = cp_e2sm_dapp_action_def_frmt_1(&src->frmt_1);
   } else {
     assert(0 != 0 && "Unknown format");
   }
@@ -91,29 +88,25 @@ e2sm_dapp_action_def_t cp_e2sm_dapp_action_def(e2sm_dapp_action_def_t const* src
   return dst;
 }
 
-bool eq_e2sm_dapp_action_def(e2sm_dapp_action_def_t* m0, e2sm_dapp_action_def_t* m1)
+bool eq_e2sm_dapp_action_def(e2sm_dapp_action_def_t const* m0, e2sm_dapp_action_def_t const* m1)
 {
   if (m0 == m1)
     return true;
-
   if (m0 == NULL || m1 == NULL)
-    return false;
-
-  if (m0->ric_style_type != m1->ric_style_type)
     return false;
 
   if (m0->format != m1->format)
     return false;
+  if (m0->ric_style_type != m1->ric_style_type)
+    return false;
 
-  if (m0->format == FORMAT_0_E2SM_DAPP_ACT_DEF) {
-    return eq_e2sm_dapp_act_def_frmt_0(&m0->frmt_0, &m1->frmt_0);
-
+  if (m0->format == FORMAT_1_E2SM_DAPP_ACTION_DEF) {
+    return eq_e2sm_dapp_action_def_frmt_1(&m0->frmt_1, &m1->frmt_1);
   } else {
-    assert(0 != 0 && "Unknown format type");
+    assert(0 != 0 && "Unknown format");
   }
 
-  assert(0 != 0 && "Impossible path");
-  return true;
+  return false;
 }
 
 //////////////////////////////////////
@@ -124,8 +117,11 @@ void free_e2sm_dapp_ind_hdr(e2sm_dapp_ind_hdr_t* src)
 {
   assert(src != NULL);
 
-  if (src->format == FORMAT_0_E2SM_DAPP_IND_HDR) {
-    free_e2sm_dapp_ind_hdr_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_IND_HDR) {
+    free_e2sm_dapp_ind_hdr_frmt_1(&src->frmt_1);
+
+  } else if (src->format == FORMAT_2_E2SM_DAPP_IND_HDR) {
+    free_e2sm_dapp_ind_hdr_frmt_2(&src->frmt_2);
 
   } else {
     assert(0 != 0 && "Unknown type");
@@ -137,8 +133,11 @@ e2sm_dapp_ind_hdr_t cp_e2sm_dapp_ind_hdr(e2sm_dapp_ind_hdr_t const* src)
   assert(src != NULL);
   e2sm_dapp_ind_hdr_t dst = {.format = src->format};
 
-  if (src->format == FORMAT_0_E2SM_DAPP_IND_HDR) {
-    dst.frmt_0 = cp_e2sm_dapp_ind_hdr_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_IND_HDR) {
+    dst.frmt_1 = cp_e2sm_dapp_ind_hdr_frmt_1(&src->frmt_1);
+
+  } else if (src->format == FORMAT_2_E2SM_DAPP_IND_HDR) {
+    dst.frmt_2 = cp_e2sm_dapp_ind_hdr_frmt_2(&src->frmt_2);
 
   } else {
     assert(0 != 0 && "Unknown type");
@@ -158,8 +157,11 @@ bool eq_e2sm_dapp_ind_hdr(e2sm_dapp_ind_hdr_t const* m0, e2sm_dapp_ind_hdr_t con
   if (m0->format != m1->format)
     return false;
 
-  if (m0->format == FORMAT_0_E2SM_DAPP_IND_HDR) {
-    return eq_e2sm_dapp_ind_hdr_frmt_0(&m0->frmt_0, &m1->frmt_0);
+  if (m0->format == FORMAT_1_E2SM_DAPP_IND_HDR) {
+    return eq_e2sm_dapp_ind_hdr_frmt_1(&m0->frmt_1, &m1->frmt_1);
+
+  } else if (m0->format == FORMAT_2_E2SM_DAPP_IND_HDR) {
+    return eq_e2sm_dapp_ind_hdr_frmt_2(&m0->frmt_2, &m1->frmt_2);
 
   } else {
     assert(0 != 0 && "Unknown format");
@@ -178,8 +180,11 @@ void free_e2sm_dapp_ind_msg(e2sm_dapp_ind_msg_t* src)
 {
   assert(src != NULL);
 
-  if (src->format == FORMAT_0_E2SM_DAPP_IND_MSG) {
-    free_e2sm_dapp_ind_msg_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_IND_MSG) {
+    free_e2sm_dapp_ind_msg_frmt_1(&src->frmt_1);
+
+  } else if (src->format == FORMAT_2_E2SM_DAPP_IND_MSG) {
+    free_e2sm_dapp_ind_msg_frmt_2(&src->frmt_2);
 
   } else {
     assert(0 != 0 && "Unknown format");
@@ -192,9 +197,11 @@ e2sm_dapp_ind_msg_t cp_e2sm_dapp_ind_msg(e2sm_dapp_ind_msg_t const* src)
 
   e2sm_dapp_ind_msg_t dst = {.format = src->format};
 
-  if (src->format == FORMAT_0_E2SM_DAPP_IND_MSG) {
-    dst.frmt_0 = cp_e2sm_dapp_ind_msg_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_IND_MSG) {
+    dst.frmt_1 = cp_e2sm_dapp_ind_msg_frmt_1(&src->frmt_1);
 
+  } else if (src->format == FORMAT_2_E2SM_DAPP_IND_MSG) {
+    dst.frmt_2 = cp_e2sm_dapp_ind_msg_frmt_2(&src->frmt_2);
   } else {
     assert(0 != 0 && "Unknown format");
   }
@@ -213,8 +220,11 @@ bool eq_e2sm_dapp_ind_msg(e2sm_dapp_ind_msg_t const* m0, e2sm_dapp_ind_msg_t con
   if (m0->format != m1->format)
     return false;
 
-  if (m0->format == FORMAT_0_E2SM_DAPP_IND_MSG) {
-    return eq_e2sm_dapp_ind_msg_frmt_0(&m0->frmt_0, &m1->frmt_0);
+  if (m0->format == FORMAT_1_E2SM_DAPP_IND_MSG) {
+    return eq_e2sm_dapp_ind_msg_frmt_1(&m0->frmt_1, &m1->frmt_1);
+
+  } else if (m0->format == FORMAT_2_E2SM_DAPP_IND_MSG) {
+    return eq_e2sm_dapp_ind_msg_frmt_2(&m0->frmt_2, &m1->frmt_2);
 
   } else {
     assert(0 != 0 && "Unknown format");
@@ -232,8 +242,8 @@ bool eq_e2sm_dapp_ind_msg(e2sm_dapp_ind_msg_t const* m0, e2sm_dapp_ind_msg_t con
 void free_e2sm_dapp_ctrl_hdr(e2sm_dapp_ctrl_hdr_t* src)
 {
   assert(src != NULL);
-  if (src->format == FORMAT_0_E2SM_DAPP_CTRL_HDR) {
-    free_e2sm_dapp_ctrl_hdr_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_CTRL_HDR) {
+    free_e2sm_dapp_ctrl_hdr_frmt_1(&src->frmt_1);
 
   } else {
     assert(0 != 0 && "Unknown type");
@@ -245,8 +255,8 @@ e2sm_dapp_ctrl_hdr_t cp_e2sm_dapp_ctrl_hdr(e2sm_dapp_ctrl_hdr_t const* src)
   assert(src != NULL);
   e2sm_dapp_ctrl_hdr_t dst = {.format = src->format};
 
-  if (dst.format == FORMAT_0_E2SM_DAPP_CTRL_HDR) {
-    dst.frmt_0 = cp_e2sm_dapp_ctrl_hdr_frmt_0(&src->frmt_0);
+  if (dst.format == FORMAT_1_E2SM_DAPP_CTRL_HDR) {
+    dst.frmt_1 = cp_e2sm_dapp_ctrl_hdr_frmt_1(&src->frmt_1);
 
   } else {
     assert(0 != 0 && "Unknown format type");
@@ -266,8 +276,8 @@ bool eq_e2sm_dapp_ctrl_hdr(e2sm_dapp_ctrl_hdr_t const* m0, e2sm_dapp_ctrl_hdr_t 
   if (m0->format != m1->format)
     return false;
 
-  if (m0->format == FORMAT_0_E2SM_DAPP_CTRL_HDR) {
-    if (eq_e2sm_dapp_ctrl_hdr_frmt_0(&m0->frmt_0, &m1->frmt_0) == false)
+  if (m0->format == FORMAT_1_E2SM_DAPP_CTRL_HDR) {
+    if (eq_e2sm_dapp_ctrl_hdr_frmt_1(&m0->frmt_1, &m1->frmt_1) == false)
       return false;
 
   } else {
@@ -285,8 +295,8 @@ void free_e2sm_dapp_ctrl_msg(e2sm_dapp_ctrl_msg_t* src)
 {
   assert(src != NULL);
 
-  if (src->format == FORMAT_0_E2SM_DAPP_CTRL_MSG) {
-    free_e2sm_dapp_ctrl_msg_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_CTRL_MSG) {
+    free_e2sm_dapp_ctrl_msg_frmt_1(&src->frmt_1);
 
   } else {
     assert(0 && "Unknown format");
@@ -299,8 +309,8 @@ e2sm_dapp_ctrl_msg_t cp_e2sm_dapp_ctrl_msg(e2sm_dapp_ctrl_msg_t const* src)
 
   e2sm_dapp_ctrl_msg_t dst = {.format = src->format};
 
-  if (src->format == FORMAT_0_E2SM_DAPP_CTRL_MSG) {
-    dst.frmt_0 = cp_e2sm_dapp_ctrl_msg_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_CTRL_MSG) {
+    dst.frmt_1 = cp_e2sm_dapp_ctrl_msg_frmt_1(&src->frmt_1);
 
   } else {
     assert(0 != 0 && "Unknown format");
@@ -321,8 +331,8 @@ bool eq_e2sm_dapp_ctrl_msg(e2sm_dapp_ctrl_msg_t const* m0, e2sm_dapp_ctrl_msg_t 
   if (m0->format != m1->format)
     return false;
 
-  if (m0->format == FORMAT_0_E2SM_DAPP_CTRL_MSG) {
-    if (eq_e2sm_dapp_ctrl_msg_frmt_0(&m0->frmt_0, &m1->frmt_0) == false)
+  if (m0->format == FORMAT_1_E2SM_DAPP_CTRL_MSG) {
+    if (eq_e2sm_dapp_ctrl_msg_frmt_1(&m0->frmt_1, &m1->frmt_1) == false)
       return false;
 
   } else {
@@ -340,8 +350,8 @@ void free_e2sm_dapp_ctrl_out(e2sm_dapp_ctrl_out_t* src)
 {
   assert(src != NULL);
 
-  if (src->format == FORMAT_0_E2SM_DAPP_CTRL_OUT) {
-    free_e2sm_dapp_ctrl_out_frmt_0(&src->frmt_0);
+  if (src->format == FORMAT_1_E2SM_DAPP_CTRL_OUT) {
+    free_e2sm_dapp_ctrl_out_frmt_1(&src->frmt_1);
 
   } else {
     assert(0 != 0 && "Unknown format");
@@ -354,8 +364,8 @@ e2sm_dapp_ctrl_out_t cp_e2sm_dapp_ctrl_out(e2sm_dapp_ctrl_out_t const* src)
 
   e2sm_dapp_ctrl_out_t dst = {.format = src->format};
 
-  if (dst.format == FORMAT_0_E2SM_DAPP_CTRL_OUT) {
-    dst.frmt_0 = cp_e2sm_dapp_ctrl_out_frmt_0(&src->frmt_0);
+  if (dst.format == FORMAT_1_E2SM_DAPP_CTRL_OUT) {
+    dst.frmt_1 = cp_e2sm_dapp_ctrl_out_frmt_1(&src->frmt_1);
 
   } else {
     assert(0 != 0 && "Unknown format");
@@ -375,8 +385,8 @@ bool eq_e2sm_dapp_ctrl_out(e2sm_dapp_ctrl_out_t const* m0, e2sm_dapp_ctrl_out_t 
   if (m0->format != m1->format)
     return false;
 
-  if (m0->format == FORMAT_0_E2SM_DAPP_CTRL_OUT) {
-    if (eq_e2sm_dapp_ctrl_out_frmt_0(&m0->frmt_0, &m1->frmt_0) == false)
+  if (m0->format == FORMAT_1_E2SM_DAPP_CTRL_OUT) {
+    if (eq_e2sm_dapp_ctrl_out_frmt_1(&m0->frmt_1, &m1->frmt_1) == false)
       return false;
 
   } else {
@@ -482,14 +492,12 @@ bool eq_e2sm_dapp_func_def(e2sm_dapp_func_def_t const* m0, e2sm_dapp_func_def_t 
 void free_dapp_sub_data(dapp_sub_data_t* src)
 {
   assert(src != NULL);
-
   free_e2sm_dapp_event_trigger(&src->et);
 
-  assert(src->sz_ad > 0 && src->sz_ad < 17);
-  for (size_t i = 0; i < src->sz_ad; ++i) {
-    free_e2sm_dapp_action_def(&src->ad[i]);
+  if (src->action_def != NULL) {
+    free_e2sm_dapp_action_def(src->action_def);
+    free(src->action_def);
   }
-  free(src->ad);
 }
 
 bool eq_dapp_sub_data(dapp_sub_data_t const* m0, dapp_sub_data_t const* m1)
@@ -503,18 +511,6 @@ bool eq_dapp_sub_data(dapp_sub_data_t const* m0, dapp_sub_data_t const* m1)
   if (eq_e2sm_dapp_event_trigger(&m0->et, &m1->et) == false)
     return false;
 
-  assert(m0->sz_ad > 0 && m0->sz_ad < 17);
-  assert(m1->sz_ad > 0 && m1->sz_ad < 17);
-  if (m0->sz_ad != m1->sz_ad)
-    return false;
-
-  for (size_t i = 0; i < m0->sz_ad; ++i) {
-    if (eq_e2sm_dapp_action_def(&m0->ad[i], &m1->ad[i]) == false) {
-      assert(0 != 0 && "debug");
-      return false;
-    }
-  }
-
   return true;
 }
 
@@ -524,17 +520,6 @@ dapp_sub_data_t cp_dapp_sub_data(dapp_sub_data_t const* src)
   dapp_sub_data_t dst = {0};
 
   dst.et = cp_e2sm_dapp_event_trigger(&src->et);
-
-  assert(src->sz_ad > 0 && src->sz_ad < 17);
-  assert(src->sz_ad == 1 && "Only one supported");
-  dst.sz_ad = src->sz_ad;
-
-  dst.ad = calloc(dst.sz_ad, sizeof(e2sm_dapp_action_def_t));
-  assert(dst.ad != NULL && "Memory exhausted");
-
-  for (size_t i = 0; i < dst.sz_ad; ++i) {
-    dst.ad[i] = cp_e2sm_dapp_action_def(&src->ad[i]);
-  }
 
   return dst;
 }
@@ -550,7 +535,6 @@ void free_dapp_ind_data(dapp_ind_data_t* ind)
   free_e2sm_dapp_ind_hdr(&ind->hdr);
   free_e2sm_dapp_ind_msg(&ind->msg);
   free_dapp_e3_ind_payload(&ind->e3);
-
 }
 
 bool eq_dapp_ind_data(dapp_ind_data_t const* m0, dapp_ind_data_t const* m1)
@@ -586,7 +570,7 @@ dapp_ind_data_t cp_dapp_ind_data(dapp_ind_data_t const* src)
 
   dst.hdr = cp_e2sm_dapp_ind_hdr(&src->hdr);
   dst.msg = cp_e2sm_dapp_ind_msg(&src->msg);
-  dst.e3 =  cp_dapp_e3_ind_payload(&src->e3);
+  dst.e3 = cp_dapp_e3_ind_payload(&src->e3);
 
   assert(eq_dapp_ind_data(src, &dst) == true);
 
@@ -604,7 +588,6 @@ void free_dapp_ctrl_req_data(dapp_ctrl_req_data_t* src)
   free_e2sm_dapp_ctrl_hdr(&src->hdr);
   free_e2sm_dapp_ctrl_msg(&src->msg);
   free_dapp_e3_ctrl_payload(&src->e3);
-
 }
 
 bool eq_dapp_ctrl_req_data(dapp_ctrl_req_data_t const* m0, dapp_ctrl_req_data_t const* m1)
@@ -665,9 +648,9 @@ dapp_e3_ind_payload_t cp_dapp_e3_ind_payload(dapp_e3_ind_payload_t const* src)
 {
   assert(src != NULL);
   dapp_e3_ind_payload_t dst = {0};
-  
+
   dst.type = src->type;
-  
+
   switch (src->type) {
     case DAPP_E3_SM_SPECTRUM:
       dst.u.spectrum = cp_spectrum_sm_report(&src->u.spectrum);
@@ -677,7 +660,7 @@ dapp_e3_ind_payload_t cp_dapp_e3_ind_payload(dapp_e3_ind_payload_t const* src)
     default:
       break;
   }
-  
+
   return dst;
 }
 
@@ -685,13 +668,13 @@ bool eq_dapp_e3_ind_payload(dapp_e3_ind_payload_t const* m0, dapp_e3_ind_payload
 {
   if (m0 == m1)
     return true;
-  
+
   if (m0 == NULL || m1 == NULL)
     return false;
-  
+
   if (m0->type != m1->type)
     return false;
-  
+
   switch (m0->type) {
     case DAPP_E3_SM_NONE:
       break;
@@ -705,7 +688,7 @@ bool eq_dapp_e3_ind_payload(dapp_e3_ind_payload_t const* m0, dapp_e3_ind_payload
       assert(0 != 0 && "Unknown DAPP E3 SM type");
       return false;
   }
-  
+
   return true;
 }
 
@@ -734,9 +717,9 @@ dapp_e3_ctrl_payload_t cp_dapp_e3_ctrl_payload(dapp_e3_ctrl_payload_t const* src
 {
   assert(src != NULL);
   dapp_e3_ctrl_payload_t dst = {0};
-  
+
   dst.type = src->type;
-  
+
   switch (src->type) {
     case DAPP_E3_SM_SPECTRUM:
       dst.u.spectrum = cp_spectrum_sm_control(&src->u.spectrum);
@@ -746,7 +729,7 @@ dapp_e3_ctrl_payload_t cp_dapp_e3_ctrl_payload(dapp_e3_ctrl_payload_t const* src
     default:
       break;
   }
-  
+
   return dst;
 }
 
@@ -754,13 +737,13 @@ bool eq_dapp_e3_ctrl_payload(dapp_e3_ctrl_payload_t const* m0, dapp_e3_ctrl_payl
 {
   if (m0 == m1)
     return true;
-  
+
   if (m0 == NULL || m1 == NULL)
     return false;
-  
+
   if (m0->type != m1->type)
     return false;
-  
+
   switch (m0->type) {
     case DAPP_E3_SM_NONE:
       break;
@@ -774,6 +757,6 @@ bool eq_dapp_e3_ctrl_payload(dapp_e3_ctrl_payload_t const* m0, dapp_e3_ctrl_payl
       assert(0 != 0 && "Unknown DAPP E3 SM type");
       return false;
   }
-  
+
   return true;
 }

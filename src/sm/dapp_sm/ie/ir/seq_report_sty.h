@@ -5,15 +5,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "../../../../util/byte_array.h"
-
+#include "dapp_e3_subscription_list.h"
 
 typedef struct {
   uint32_t report_type;
   byte_array_t name;
-  uint32_t ev_trig_type;
-  uint32_t act_frmt_type;
   uint32_t ind_hdr_type;
   uint32_t ind_msg_type;
+  dapp_e3_subscription_list_t* dapp_e3_subs;
 } seq_report_sty_dapp_sm_t;
 
 void free_seq_report_sty_dapp_sm(seq_report_sty_dapp_sm_t* src);

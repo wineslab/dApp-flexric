@@ -129,3 +129,44 @@ void async_event_agent_api(uint32_t ric_req_id, void* ind_data)
   e2_async_event_agent(agent, ric_req_id, ind_data);
 }
 
+void trigger_ric_service_update_api(void)
+{
+  assert(agent != NULL);
+
+  static uint16_t service_update_rev = 1;
+
+  sm_agent_t* sm = sm_plugin_ag(&agent->plugin, 255);
+  if (sm == NULL) {
+    printf("[E2 AGENT]: DAPP SM not found, cannot send RIC Service Update\n");
+    return;
+  }
+
+  sm_e2_setup_data_t setup = sm->proc.on_e2_setup(sm);
+
+  ric_service_update_t su = {0};
+  su.trans_id = (uint8_t)(service_update_rev % 256);
+
+  su.len_added = 0;
+  su.added = NULL;
+  su.len_deleted = 0;
+  su.deleted = NULL;
+
+  su.len_modified = 1;
+  su.modified = calloc(1, sizeof(ran_function_t));
+  assert(su.modified != NULL && "Memory exhausted");
+
+  su.modified[0].id = sm->info.id();
+  su.modified[0].rev = service_update_rev++;
+  su.modified[0].defn.buf = setup.ran_fun_def;
+  su.modified[0].defn.len = setup.len_rfd;
+
+  const char* oid = sm->info.oid();
+  su.modified[0].oid.buf = (uint8_t*)strdup(oid);
+  su.modified[0].oid.len = strlen(oid);
+
+  e2_send_ric_service_update(agent, &su);
+
+  free(su.modified[0].defn.buf);
+  free(su.modified[0].oid.buf);
+  free(su.modified);
+}

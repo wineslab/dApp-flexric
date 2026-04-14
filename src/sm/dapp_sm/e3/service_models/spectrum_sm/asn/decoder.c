@@ -18,8 +18,7 @@ bool spectrum_sm_dec_report(const uint8_t* buf, size_t len, spectrum_sm_report_t
   Spectrum_PRBBlacklistReport_t* asn_ref = &asn;
 
   // Decode APER-encoded Spectrum-Report
-  asn_dec_rval_t ret = aper_decode(NULL, &asn_DEF_Spectrum_PRBBlacklistReport,
-                                  (void**)&asn_ref, buf, len, 0, 0);
+  asn_dec_rval_t ret = aper_decode(NULL, &asn_DEF_Spectrum_PRBBlacklistReport, (void**)&asn_ref, buf, len, 0, 0);
   if (ret.code != RC_OK) {
     ASN_STRUCT_RESET(asn_DEF_Spectrum_PRBBlacklistReport, &asn);
     return false;

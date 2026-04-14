@@ -27,10 +27,19 @@ typedef struct {
 /**
  * @brief Handle a new subscription for the DAPP service model on the agent.
  *
- * - Decodes the event trigger and action definition from the subscription data.
- * - Fills a wr_dapp_sub_data_t wrapper.
- * - Forwards it to the RAN via sm->base.io.write_subs().
- * - Returns the subscription outcome (sm_ag_if_ans_subs_t).
+ * Decodes the E2SM-DAPP event trigger and action definition from the
+ * incoming subscription data, wraps them in a wr_dapp_sub_data_t, and
+ * forwards the subscription to the RAN via sm->base.io.write_subs().
+ *
+ * The action definition carries the report style type, which determines
+ * what indication formats the agent will send to this subscriber:
+ *   - Style 1: Format 1 only (E3 data reports)
+ *   - Style 2: Format 2 only (E3 subscription map)
+ *
+ * @param sm_agent  The DAPP SM agent instance.
+ * @param data      Raw subscription data from the E2AP layer (event trigger
+ *                  and action definition as encoded byte arrays).
+ * @return          Subscription outcome (APERIODIC_SUBSCRIPTION_FLRC).
  */
 static sm_ag_if_ans_subs_t on_subscription_dapp_sm_ag(sm_agent_t const* sm_agent, const sm_subs_data_t* data)
 {
@@ -45,16 +54,18 @@ static sm_ag_if_ans_subs_t on_subscription_dapp_sm_ag(sm_agent_t const* sm_agent
   wr_dapp.dapp.et = dapp_dec_event_trigger(&sm->enc, data->len_et, data->event_trigger);
   defer({ free_e2sm_dapp_event_trigger(&wr_dapp.dapp.et); });
 
-  wr_dapp.dapp.sz_ad = 1; /* Currently we support a single action definition */
-  wr_dapp.dapp.ad = calloc(wr_dapp.dapp.sz_ad, sizeof(e2sm_dapp_action_def_t));
-  assert(wr_dapp.dapp.ad != NULL && "Memory exhausted");
+  /* Decode E2SM-DAPP action definition (if present) */
+  if (data->action_def != NULL && data->len_ad > 0) {
+    wr_dapp.dapp.action_def = calloc(1, sizeof(e2sm_dapp_action_def_t));
+    assert(wr_dapp.dapp.action_def != NULL && "Memory exhausted");
+    *wr_dapp.dapp.action_def = dapp_dec_action_def(&sm->enc, data->len_ad, data->action_def);
+  }
   defer({
-    free_e2sm_dapp_action_def(wr_dapp.dapp.ad);
-    free(wr_dapp.dapp.ad);
+    if (wr_dapp.dapp.action_def != NULL) {
+      free_e2sm_dapp_action_def(wr_dapp.dapp.action_def);
+      free(wr_dapp.dapp.action_def);
+    }
   });
-
-  /* Decode the action definition payload */
-  wr_dapp.dapp.ad[0] = dapp_dec_action_def(&sm->enc, data->len_ad, data->action_def);
 
   /* Forward subscription to the RAN via the SM I/O interface */
 #ifdef E3_AGENT
@@ -71,10 +82,21 @@ static sm_ag_if_ans_subs_t on_subscription_dapp_sm_ag(sm_agent_t const* sm_agent
 /**
  * @brief Encode and export an indication for the DAPP service model.
  *
- * - Takes internal dapp_ind_data_t (hdr + msg).
- * - Encodes indication header and message using E2SM-DAPP encoders.
- * - Returns an exp_ind_data_t that contains raw encoded buffers and lengths,
- *   which will be sent over E2AP.
+ * Takes an internal dapp_ind_data_t (header + message + E3 payload),
+ * encodes the indication header and message using the E2SM-DAPP codec,
+ * and returns an exp_ind_data_t containing the raw encoded buffers.
+ *
+ * Supports both indication formats:
+ *   - Format 1: E3 data report (header with ran_function_id/dapp_id)
+ *   - Format 2: E3 subscription map (header with node identity only)
+ *
+ * The encoded buffers are sent over E2AP as OCTET STRINGs in the
+ * RIC INDICATION message.
+ *
+ * @param sm_agent  The DAPP SM agent instance.
+ * @param ind_data  Pointer to a heap-allocated dapp_ind_data_t. Ownership
+ *                  is transferred — the function frees it before returning.
+ * @return          Encoded indication header and message buffers.
  */
 static exp_ind_data_t on_indication_dapp_sm_ag(sm_agent_t const* sm_agent, void* ind_data)
 {
@@ -108,10 +130,16 @@ static exp_ind_data_t on_indication_dapp_sm_ag(sm_agent_t const* sm_agent, void*
 /**
  * @brief Handle a control request for the DAPP service model on the agent.
  *
- * - Decodes E2SM-DAPP control header and message from the incoming request.
- * - Passes a dapp_ctrl_req_data_t to the RAN via sm->base.io.write_ctrl().
- * - Encodes the resulting E2SM-DAPP control outcome back into a byte_array_t.
- * - Returns the encoded control outcome in sm_ctrl_out_data_t.
+ * Decodes the E2SM-DAPP control header and message from the incoming
+ * request, forwards them to the RAN via sm->base.io.write_ctrl(), and
+ * encodes the resulting control outcome back into a byte array.
+ *
+ * When compiled with E3_AGENT, the control message is forwarded to the
+ * E3 agent for delivery to the target dApp.
+ *
+ * @param sm_agent  The DAPP SM agent instance.
+ * @param data      Encoded control header and message from the RIC.
+ * @return          Encoded control outcome to send back to the RIC.
  */
 static sm_ctrl_out_data_t on_control_dapp_sm_ag(sm_agent_t const* sm_agent, sm_ctrl_req_data_t const* data)
 {
@@ -145,8 +173,10 @@ static sm_ctrl_out_data_t on_control_dapp_sm_ag(sm_agent_t const* sm_agent, sm_c
 /**
  * @brief Build the RAN function name, OID, and description for the DAPP SM.
  *
- * Fills a ran_function_name_t structure with the short name, OID,
- * and human-readable description defined for the DAPP service model.
+ * Uses the constants defined in dapp_sm_id.h (SM_DAPP_SHORT_NAME,
+ * SM_DAPP_OID, SM_DAPP_DESCRIPTION).
+ *
+ * @return  Populated ran_function_name_t (caller owns the byte arrays).
  */
 static ran_function_name_t fill_ran_func_name(void)
 {
@@ -167,10 +197,15 @@ static ran_function_name_t fill_ran_func_name(void)
 /**
  * @brief Build the E2 Setup data for the DAPP SM on the agent.
  *
- * - Retrieves DAPP setup information from the RAN via read_setup().
- * - Populates the RAN function name/description/OID.
- * - Encodes the E2SM-DAPP function definition into a byte array
- *   to be included in the E2 Setup Response.
+ * Called during E2 setup and RIC service update. Retrieves the DAPP
+ * RAN function definition from the RAN (which includes report styles,
+ * control styles, and the current dApp E3 subscription map), sets the
+ * RAN function name/OID/description, and encodes the full definition
+ * into a byte array for inclusion in the E2 SETUP REQUEST or
+ * RIC SERVICE UPDATE message.
+ *
+ * @param sm_agent  The DAPP SM agent instance.
+ * @return          Encoded RAN function definition.
  */
 static sm_e2_setup_data_t on_e2_setup_dapp_sm_ag(sm_agent_t const* sm_agent)
 {
@@ -259,10 +294,17 @@ static char const* oid_dapp_sm_ag(void)
 /**
  * @brief Allocate and initialize the DAPP service model agent.
  *
- * - Allocates the internal sm_dapp_agent_t structure.
- * - Wires the I/O callbacks from sm_io_ag_ran_t.
- * - Registers the service model handlers (subscription, indication, control,
- *   E2 setup, RIC service update) and metadata (id, rev, OID, name).
+ * Creates the internal sm_dapp_agent_t, wires the I/O callbacks from
+ * the sm_io_ag_ran_t table, and registers all SM procedure handlers:
+ *   - on_subscription: decodes event trigger + action definition,
+ *     forwards to write_subs which routes by report style type
+ *   - on_indication: encodes Format 1 or Format 2 indications
+ *   - on_control: decodes/forwards/encodes control requests
+ *   - on_e2_setup: builds the RAN function definition
+ *   - on_ric_service_update: stub (updates triggered externally)
+ *
+ * @param io  I/O callback table connecting the SM to the RAN functions.
+ * @return    Pointer to the initialized SM agent (caller owns).
  */
 sm_agent_t* make_dapp_sm_agent(sm_io_ag_ran_t io)
 {

@@ -99,12 +99,6 @@ sm_ag_if_rd_ind_t cp_sm_ag_if_rd_ind(sm_ag_if_rd_ind_t const* d)
   } else if(ans.type == DAPP_STATS_V0) {
     ans.dapp.ric_id = d->dapp.ric_id;
     ans.dapp.ind = cp_dapp_ind_data(&d->dapp.ind);
-    if(d->dapp.act_def != NULL){
-      e2sm_dapp_action_def_t* tmp = calloc(1, sizeof(e2sm_dapp_action_def_t));
-      assert(tmp != NULL && "Memory exhausted");
-      *tmp = cp_e2sm_dapp_action_def(d->dapp.act_def);
-      ans.dapp.act_def = tmp;
-    }
 #endif //E3_AGENT
   } else {
     assert("Unknown type or not implemented");

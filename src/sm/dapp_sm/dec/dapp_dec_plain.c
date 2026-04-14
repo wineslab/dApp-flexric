@@ -14,10 +14,10 @@ e2sm_dapp_event_trigger_t dapp_dec_event_trigger_plain(size_t len, uint8_t const
   return ev;
 }
 
-e2sm_dapp_action_def_t dapp_dec_action_def_plain(size_t len, uint8_t const action_def[len])
+e2sm_dapp_action_def_t dapp_dec_action_def_plain(size_t len, uint8_t const buf[len])
 {
   assert(0 != 0 && "Not implemented");
-  assert(action_def != NULL);
+  assert(buf != NULL);
   assert(len > 0);
   e2sm_dapp_action_def_t act_def = {0};
   return act_def;
