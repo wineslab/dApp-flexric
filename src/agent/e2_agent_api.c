@@ -125,13 +125,19 @@ void stop_agent_api(void)
 
 void async_event_agent_api(uint32_t ric_req_id, void* ind_data)
 {
-  assert(agent != NULL);
+  if (agent == NULL) {
+    printf("[E2 AGENT]: not initialised yet, dropping async event (ric_req_id=%u)\n", ric_req_id);
+    return;
+  }
   e2_async_event_agent(agent, ric_req_id, ind_data);
 }
 
 void trigger_ric_service_update_api(void)
 {
-  assert(agent != NULL);
+  if (agent == NULL) {
+    printf("[E2 AGENT]: not initialised yet, skipping RIC Service Update\n");
+    return;
+  }
 
   static uint16_t service_update_rev = 1;
 

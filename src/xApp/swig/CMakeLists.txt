@@ -92,6 +92,9 @@ if(XAPP_TARGET_LANGUAGE STREQUAL "PYTHON_LANG")
      "${CMAKE_SOURCE_DIR}/examples/xApp/python3/xapp_slice_moni_ctrl.py" "${CMAKE_BINARY_DIR}/examples/xApp/python3/xapp_slice_moni_ctrl.py" )
 
    add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/xapp_spectrum.py" "${CMAKE_BINARY_DIR}/examples/xApp/python3/xapp_spectrum.py" )
+
+   add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_SOURCE_DIR}/examples/xApp/python3/watch_slice_stats" "${CMAKE_BINARY_DIR}/examples/xApp/python3/watch_slice_stats" )
 
   #add_custom_command(TARGET xapp_sdk POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different

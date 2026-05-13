@@ -334,10 +334,6 @@ byte_array_t dapp_enc_ctrl_msg_asn(e2sm_dapp_ctrl_msg_t const* src)
 
   if (src->format == FORMAT_1_E2SM_DAPP_CTRL_MSG) {
     dst.ric_controlMessage_formats.present = E2SM_DAPP_ControlMessage__ric_controlMessage_formats_PR_controlMessage_Format1;
-
-    dst.ric_controlMessage_formats.choice.controlMessage_Format1 = calloc(1, sizeof(E2SM_DAPP_ControlMessage_Format1_t));
-    assert(dst.ric_controlMessage_formats.choice.controlMessage_Format1 != NULL && "Memory exhausted");
-
     dst.ric_controlMessage_formats.choice.controlMessage_Format1 = enc_ctrl_msg_frmt_1(&src->frmt_1);
   } else {
     assert(0 != 0 && "Unknown format type");

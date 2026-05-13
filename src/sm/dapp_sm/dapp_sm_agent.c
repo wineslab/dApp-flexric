@@ -217,6 +217,8 @@ static sm_e2_setup_data_t on_e2_setup_dapp_sm_ag(sm_agent_t const* sm_agent)
 #ifdef E3_AGENT
   sm->base.io.read_setup(&dapp);
 #endif
+
+  free_ran_function_name(&dapp.ran_func_def.name);
   dapp.ran_func_def.name = fill_ran_func_name();
 
   assert(dapp.ran_func_def.name.name.buf != NULL);

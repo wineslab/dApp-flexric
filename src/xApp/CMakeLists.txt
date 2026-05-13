@@ -84,7 +84,7 @@ set(XAPP_SRC
   )
 
 if(E3_AGENT)
-  list(APPEND XAPP_SRC $<TARGET_OBJECTS:e3sm_obj>)
+  list(APPEND XAPP_SRC $<TARGET_OBJECTS:e3sm_ir_obj>)
   list(APPEND XAPP_SRC ../sm/dapp_sm/ie/dapp_data_ie.c)
   list(APPEND XAPP_SRC $<TARGET_OBJECTS:e2sm_dapp_ir_obj>)
 endif()
@@ -107,6 +107,13 @@ if(E2AP_ENCODING STREQUAL "ASN")
             $<TARGET_OBJECTS:e2ap_asn1_obj>
             $<TARGET_OBJECTS:e2_conv_obj>
             )
+
+          target_link_libraries(e42_xapp_shared
+                     PUBLIC
+                     asn1_nr_rrc
+                     sm_common_dec_asn_obj_rc
+                     3gpp_derived_ie_dec_asn_obj_rc
+                    )
 
 	 target_compile_options(e42_xapp_shared PRIVATE "-DASN_DISABLE_OER_SUPPORT" -fPIC)
 

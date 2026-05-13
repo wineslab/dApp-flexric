@@ -23,3 +23,16 @@ target_include_directories(e3sm_obj PUBLIC
 )
 
 target_compile_options(e3sm_obj PRIVATE -Wno-missing-field-initializers -Wno-unused-parameter -fPIC -fvisibility=hidden)
+
+set(DAPP_E3_IR_SRC
+  service_models/spectrum_sm/ir/spectrum_report.c
+  service_models/spectrum_sm/ir/spectrum_control.c
+)
+
+add_library(e3sm_ir_obj OBJECT ${DAPP_E3_IR_SRC})
+
+target_include_directories(e3sm_ir_obj PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/service_models/spectrum_sm/ir
+)
+
+target_compile_options(e3sm_ir_obj PRIVATE -Wno-missing-field-initializers -Wno-unused-parameter -fPIC -fvisibility=hidden)

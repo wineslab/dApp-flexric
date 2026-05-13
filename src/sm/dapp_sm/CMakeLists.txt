@@ -119,3 +119,22 @@ endif()
 target_compile_definitions(dapp_sm PUBLIC ${SM_ENCODING_DAPP} ${E2AP_VERSION} ${KPM_VERSION}  )
 target_compile_definitions(dapp_sm_static PUBLIC ${SM_ENCODING_DAPP} ${E2AP_VERSION} ${KPM_VERSION}   )
 
+if(SM_ENCODING_DAPP STREQUAL "ASN")
+  add_library(dapp_sm_agent_no_e3_obj OBJECT dapp_sm_agent.c)
+  target_include_directories(dapp_sm_agent_no_e3_obj PRIVATE
+                                "${CMAKE_CURRENT_SOURCE_DIR}/ie"
+                                "${CMAKE_CURRENT_SOURCE_DIR}/ie/ir"
+                                "${CMAKE_CURRENT_SOURCE_DIR}/ie/asn"
+                                "${CMAKE_CURRENT_SOURCE_DIR}/../../util"
+                                "${CMAKE_CURRENT_SOURCE_DIR}/e3"
+                            )
+  target_compile_options(dapp_sm_agent_no_e3_obj PRIVATE
+                              -DASN_DISABLE_OER_SUPPORT
+                              -DASN_DISABLE_JER_SUPPORT
+                              -Wno-missing-field-initializers
+                              -Wno-unused-parameter
+                              -fvisibility=hidden
+                              -UE3_AGENT)
+  target_compile_definitions(dapp_sm_agent_no_e3_obj PUBLIC ${SM_ENCODING_DAPP} ${E2AP_VERSION} ${KPM_VERSION})
+endif()
+

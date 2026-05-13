@@ -147,6 +147,8 @@ static sm_ag_if_rd_ind_t on_indication_dapp_sm_ric(sm_ric_t const* sm_ric, sm_in
  *      2) Injects the encoded E3 buffer into tmp.msg.frmt_1.data / data_size.
  *      3) Encodes the DAPP ControlHeader and ControlMessage into byte arrays
  *         using dapp_enc_ctrl_hdr() and dapp_enc_ctrl_msg().
+ *      4) Releases the temporary E3 buffer once dapp_enc_ctrl_msg() has
+ *         copied its bytes into the outer ControlMessage encoding.
  *  - Fills a sm_ctrl_req_data_t structure with:
  *      * ctrl_hdr / len_hdr: encoded E2SM-DAPP ControlHeader
  *      * ctrl_msg / len_msg: encoded E2SM-DAPP ControlMessage
@@ -191,6 +193,8 @@ static sm_ctrl_req_data_t ric_on_control_req_dapp_sm_ric(sm_ric_t const* sm_ric,
     byte_array_t ba_msg = dapp_enc_ctrl_msg(&sm->enc, &tmp.msg);
     dst.ctrl_msg = ba_msg.buf;
     dst.len_msg = ba_msg.len;
+
+    free(e3_buf);
   }
 
   return dst;
@@ -247,85 +251,99 @@ static sm_ag_if_rd_rsu_t on_ric_service_update_dapp_sm_ric(sm_ric_t const* sm_ri
 }
 
 /**
- * @brief Free resources associated with the DAPP SM RIC instance.
+ * @brief Free the DAPP SM RIC instance allocated by make_dapp_sm_ric().
  *
- * Currently there is no dynamically allocated state inside sm_dapp_ric_t
- * beyond the structure itself, so this is a no-op.
+ * Releases the sm_dapp_ric_t container itself; the framework's plugin
+ * loader stores no extra heap state beyond it.
  */
 static void free_dapp_sm_ric(sm_ric_t* sm_ric)
 {
   assert(sm_ric != NULL);
+  sm_dapp_ric_t* sm = (sm_dapp_ric_t*)sm_ric;
+  free(sm);
 }
 
+/*
+ * The six alloc.free_* callbacks below are the duals of the on_* procedures
+ * in sm_e2ap_procedures_ric_t — each one releases the heap memory the
+ * matching procedure returned. The framework currently invokes
+ * free_ind_data after every on_indication (msg_handler_ric.c); the others
+ * are wired in for forward-compatibility.
+ */
+
 /**
- * @brief Free subscription-related data for the DAPP SM at the RIC.
+ * @brief Free the sm_subs_data_t produced by on_subscription_dapp_sm_ric.
  *
- * This is a placeholder and will abort if called, as the corresponding
- * allocation logic is not implemented yet.
+ * Releases the encoded event_trigger and action_def byte buffers.
  */
 static void free_subs_data_dapp_sm_ric(void* msg)
 {
   assert(msg != NULL);
-  assert(0 != 0 && "Not implemented");
+  free_sm_subs_data((sm_subs_data_t*)msg);
 }
 
 /**
- * @brief Free indication data for the DAPP SM at the RIC.
+ * @brief Free the sm_ag_if_rd_ind_t produced by on_indication_dapp_sm_ric.
  *
- * Currently a no-op, as ownership and lifetime of indication data
- * are managed by the caller.
+ * The framework calls this after publishing the indication. Releases the
+ * decoded DAPP indication header, message, and inner E3 payload.
  */
 static void free_ind_data_dapp_sm_ric(void* msg)
 {
   assert(msg != NULL);
+  sm_ag_if_rd_ind_t* rd_ind = (sm_ag_if_rd_ind_t*)msg;
+  assert(rd_ind->type == DAPP_STATS_V0);
+  free_dapp_ind_data(&rd_ind->dapp.ind);
 }
 
 /**
- * @brief Free control request data for the DAPP SM at the RIC.
+ * @brief Free the sm_ctrl_req_data_t produced by ric_on_control_req_dapp_sm_ric.
  *
- * This is a placeholder and will abort if called, as the corresponding
- * allocation logic is not implemented yet.
+ * Releases the encoded ctrl_hdr and ctrl_msg byte buffers.
  */
 static void free_ctrl_req_data_dapp_sm_ric(void* msg)
 {
   assert(msg != NULL);
-  assert(0 != 0 && "Not implemented");
+  free_sm_ctrl_req_data((sm_ctrl_req_data_t*)msg);
 }
 
 /**
- * @brief Free control outcome data for the DAPP SM at the RIC.
+ * @brief Free the sm_ag_if_ans_ctrl_t produced by ric_on_control_out_dapp_sm_ric.
  *
- * This is a placeholder and will abort if called, as the corresponding
- * allocation logic is not implemented yet.
+ * Releases the decoded DAPP control outcome in the .dapp union member.
  */
 static void free_ctrl_out_data_dapp_sm_ric(void* msg)
 {
   assert(msg != NULL);
-  assert(0 != 0 && "Not implemented");
+  sm_ag_if_ans_ctrl_t* ans = (sm_ag_if_ans_ctrl_t*)msg;
+  assert(ans->type == DAPP_AGENT_IF_CTRL_ANS_V0);
+  free_e2sm_dapp_ctrl_out(&ans->dapp);
 }
 
 /**
- * @brief Free E2 Setup data for the DAPP SM at the RIC.
+ * @brief Free the sm_ag_if_rd_e2setup_t produced by ric_on_e2_setup_dapp_sm_ric.
  *
- * This is a placeholder and will abort if called, as the corresponding
- * allocation logic is not implemented yet.
+ * Releases the decoded RAN function definition in the .dapp union member.
  */
 static void free_e2_setup_dapp_sm_ric(void* msg)
 {
   assert(msg != NULL);
-  assert(0 != 0 && "Not implemented");
+  sm_ag_if_rd_e2setup_t* e2 = (sm_ag_if_rd_e2setup_t*)msg;
+  assert(e2->type == DAPP_AGENT_IF_E2_SETUP_ANS_V0);
+  free_e2sm_dapp_func_def(&e2->dapp.ran_func_def);
 }
 
 /**
- * @brief Free RIC Service Update data for the DAPP SM at the RIC.
+ * @brief Free the sm_ag_if_rd_rsu_t produced by on_ric_service_update_dapp_sm_ric.
  *
- * This is a placeholder and will abort if called, as the corresponding
- * allocation logic is not implemented yet.
+ * The matching procedure is currently a stub that returns a zero-initialized
+ * structure, so there is nothing to release; the function exists only to
+ * keep the alloc.free_* table fully populated.
  */
 static void free_ric_service_update_dapp_sm_ric(void* msg)
 {
   assert(msg != NULL);
-  assert(0 != 0 && "Not implemented");
+  (void)msg;
 }
 
 /**
